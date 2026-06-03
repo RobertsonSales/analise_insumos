@@ -303,7 +303,7 @@
         let pct = Math.min(100, Math.floor(p * 100));
         b.style.width = pct + '%';
         b.innerText = text || pct + '%';
-        if (pct === 100) setTimeout(() => c.style.display = 'none', 1500);
+        if (pct >= 100) setTimeout(() => { c.style.display = 'none'; b.style.width = '0%'; }, 1800);
     }
     
     function createCheckboxList(containerId, items, namePrefix) {
@@ -356,7 +356,80 @@
         document.querySelectorAll('.period-chk').forEach(cb => cb.checked = periodsToSelect.has(cb.value));
         updateSelectAllState('periodFilter'); applyFiltersAndRender(); refreshInsActiveBadge();
     }
-    function handleFile(e){ let file=e.target.files[0]; if(!file) return; document.getElementById('fileNameDisplay').innerHTML=`📄 ${file.name}`; let reader=new FileReader(); reader.onload=ev=>{ let data=new Uint8Array(ev.target.result); let wb=XLSX.read(data,{type:'array',cellDates:true}); let sheetName=wb.SheetNames.find(n=>/dados abertos/i.test(n))||wb.SheetNames[0]; let ws=wb.Sheets[sheetName]; updateProgress(0.1, "Processando..."); let rows=extractNormalizedRows(ws); if(!rows.length){ alert('Formato não reconhecido.'); updateProgress(0); return; } let cleaned=cleanInvalidRecords(rows); processRawData(cleaned); updateProgress(1, "Concluído!"); }; reader.readAsArrayBuffer(file); }
+    function handleFile(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('fileNameDisplay').innerHTML = `📄 ${file.name}`;
+
+        // Exibe a barra imediatamente, antes de iniciar a leitura
+        let pc = document.getElementById('progressContainer');
+        let pb = document.getElementById('progressBar');
+        pc.style.display = 'flex';
+        pb.style.width = '5%';
+        pb.innerText = 'Lendo arquivo…';
+
+        let reader = new FileReader();
+        reader.onload = ev => {
+            updateProgress(0.12, 'Lendo planilha…');
+            setTimeout(() => {
+                let data = new Uint8Array(ev.target.result);
+                let wb = XLSX.read(data, { type: 'array', cellDates: true });
+                let sheetName = wb.SheetNames.find(n => /dados abertos/i.test(n)) || wb.SheetNames[0];
+                let ws = wb.Sheets[sheetName];
+
+                // Conta linhas da matriz para usar no contador
+                let matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
+                let totalMatrixRows = matrix.length || 1;
+
+                updateProgress(0.30, `Processando 0 de ${totalMatrixRows.toLocaleString('pt-BR')} linhas…`);
+
+                let rows = [];
+                const STEPS = 8;
+                const stepSize = Math.max(1, Math.floor(totalMatrixRows / STEPS));
+                let step = 0;
+
+                const tickProgress = () => {
+                    step++;
+                    let processed = Math.min(step * stepSize, totalMatrixRows);
+                    let ratio = 0.30 + (step / STEPS) * 0.45;
+
+                    // Extrai os dados somente na primeira iteração
+                    if (step === 1) {
+                        rows = extractNormalizedRows(ws);
+                    }
+
+                    if (step < STEPS) {
+                        updateProgress(ratio, `Processando ${processed.toLocaleString('pt-BR')} de ${totalMatrixRows.toLocaleString('pt-BR')} linhas…`);
+                        setTimeout(tickProgress, 35);
+                    } else {
+                        updateProgress(0.80, `Processando ${totalMatrixRows.toLocaleString('pt-BR')} de ${totalMatrixRows.toLocaleString('pt-BR')} linhas…`);
+                        setTimeout(finalize, 40);
+                    }
+                };
+
+                const finalize = () => {
+                    if (!rows.length) {
+                        alert('Formato não reconhecido.');
+                        pc.style.display = 'none';
+                        pb.style.width = '0%';
+                        return;
+                    }
+                    updateProgress(0.88, `Validando ${rows.length.toLocaleString('pt-BR')} registros…`);
+                    setTimeout(() => {
+                        let cleaned = cleanInvalidRecords(rows);
+                        updateProgress(0.96, `Carregando ${cleaned.length.toLocaleString('pt-BR')} registros válidos…`);
+                        setTimeout(() => {
+                            processRawData(cleaned);
+                            updateProgress(1, `✔ ${cleaned.length.toLocaleString('pt-BR')} registros carregados!`);
+                        }, 60);
+                    }, 60);
+                };
+
+                tickProgress();
+            }, 30);
+        };
+        reader.readAsArrayBuffer(file);
+    }
     function processRawData(rows){
         originalData = rows.map(r => ({ ...r, linha_atuacao: r.linha_atuacao || inferLinhaAtuacao(r.produto, '') }));
         if(!originalData.length) return;
@@ -760,9 +833,11 @@
             .cliente-resumo-card > div:last-child { font-size: 13px; font-weight: 800; color: #1a5c38; }
             .table-wrapper { overflow-x: auto; margin: 20px 0; }
             table { width: 100%; border-collapse: collapse; font-size: 9px; }
-            th { background: #2c6e4f; color: white; padding: 8px; text-align: left; }
+            thead { display: table-header-group; }
+            th { background: #2c6e4f; color: white; padding: 8px; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             td { border: 1px solid #ccc; padding: 6px; }
             tr { break-inside: avoid; }
+            .group-header-row-alu td { background: #2c6e4f; color: white; font-weight: 700; padding: 6px 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             @page { size: landscape; margin: 1.5cm; }
         </style>
         </head>
@@ -1001,15 +1076,18 @@
                 </div>
                 <div class="filter-group">
                     <label>FORNECEDOR</label>
-                    <div class="checkbox-filter-container">${uniqueForn.map(f=>`<label class="checkbox-item"><input type="checkbox" value="${escapeHtml(f)}" class="alu-forn-chk"> <span>${escapeHtml(f)}</span></label>`).join('')}</div>
+                    <div class="select-all-wrapper"><input type="checkbox" id="alu-select-all-forn"> <label for="alu-select-all-forn">Todos</label></div>
+                    <div class="checkbox-filter-container" id="alu-forn-filter">${uniqueForn.map(f=>`<label class="checkbox-item"><input type="checkbox" value="${escapeHtml(f)}" class="alu-forn-chk"> <span>${escapeHtml(f)}</span></label>`).join('')}</div>
                 </div>
                 <div class="filter-group">
                     <label>CLIENTE</label>
-                    <div class="checkbox-filter-container">${uniqueCli.map(c=>`<label class="checkbox-item"><input type="checkbox" value="${escapeHtml(c)}" class="alu-cli-chk"> <span>${escapeHtml(c)}</span></label>`).join('')}</div>
+                    <div class="select-all-wrapper"><input type="checkbox" id="alu-select-all-cli"> <label for="alu-select-all-cli">Todos</label></div>
+                    <div class="checkbox-filter-container" id="alu-cli-filter">${uniqueCli.map(c=>`<label class="checkbox-item"><input type="checkbox" value="${escapeHtml(c)}" class="alu-cli-chk"> <span>${escapeHtml(c)}</span></label>`).join('')}</div>
                 </div>
                 <div class="filter-group">
                     <label>LINHA</label>
-                    <div class="checkbox-filter-container">${uniqueLinha.map(l=>`<label class="checkbox-item"><input type="checkbox" value="${escapeHtml(l)}" class="alu-linha-chk"> <span>${escapeHtml(l)}</span></label>`).join('')}</div>
+                    <div class="select-all-wrapper"><input type="checkbox" id="alu-select-all-linha"> <label for="alu-select-all-linha">Todas</label></div>
+                    <div class="checkbox-filter-container" id="alu-linha-filter">${uniqueLinha.map(l=>`<label class="checkbox-item"><input type="checkbox" value="${escapeHtml(l)}" class="alu-linha-chk"> <span>${escapeHtml(l)}</span></label>`).join('')}</div>
                 </div>
                 <div class="filter-group" style="flex:2 1 260px;">
                     <label><i class="fas fa-search"></i> BUSCA</label>
@@ -1051,7 +1129,7 @@
                 <i class="fas fa-chevron-down toggle-icon" id="alu-extrato-icon"></i>
             </h3>
             <div id="alu-extrato-content" class="collapsible-content" style="display:none;">
-                <div class="table-wrapper"><table class="data-table"><thead><tr><th>Fatura</th><th>Cliente</th><th>CNPJ</th><th>Valor</th><th>Emissão</th><th>Linha</th><th>Fornecedor</th></tr></thead><tbody id="alu-tbody"></tbody></table></div>
+                <div class="table-wrapper" style="overflow-x: auto; overflow-y: visible;"><table class="data-table"><thead><tr><th style="position:static;">Fatura</th><th style="position:static;">Cliente</th><th style="position:static;">CNPJ</th><th style="position:static;">Valor</th><th style="position:static;">Emissão</th><th style="position:static;">Linha</th><th style="position:static;">Fornecedor</th></tr></thead><tbody id="alu-tbody"></tbody></table></div>
             </div>
         </div>`;
 
@@ -1113,11 +1191,55 @@
             refreshAluActiveBadge();
             updateAlugueisView(getAlugueisFiltered());
         }));
-        document.querySelectorAll('.alu-forn-chk, .alu-cli-chk, .alu-linha-chk').forEach(cb => cb.addEventListener('change', () => { refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered()); }));
+        // Helpers para atualizar estado dos "Selecionar todos" de Fornecedor, Cliente e Linha
+        function updateAluSelectAllForn() {
+            const allBtn = document.getElementById('alu-select-all-forn'); if (!allBtn) return;
+            const cbs = document.querySelectorAll('.alu-forn-chk');
+            const checked = Array.from(cbs).filter(c=>c.checked).length;
+            allBtn.checked = cbs.length > 0 && checked === cbs.length;
+            allBtn.indeterminate = checked > 0 && checked < cbs.length;
+        }
+        function updateAluSelectAllCli() {
+            const allBtn = document.getElementById('alu-select-all-cli'); if (!allBtn) return;
+            const cbs = document.querySelectorAll('.alu-cli-chk');
+            const checked = Array.from(cbs).filter(c=>c.checked).length;
+            allBtn.checked = cbs.length > 0 && checked === cbs.length;
+            allBtn.indeterminate = checked > 0 && checked < cbs.length;
+        }
+        function updateAluSelectAllLinha() {
+            const allBtn = document.getElementById('alu-select-all-linha'); if (!allBtn) return;
+            const cbs = document.querySelectorAll('.alu-linha-chk');
+            const checked = Array.from(cbs).filter(c=>c.checked).length;
+            allBtn.checked = cbs.length > 0 && checked === cbs.length;
+            allBtn.indeterminate = checked > 0 && checked < cbs.length;
+        }
+
+        // Select-all: Fornecedor
+        document.getElementById('alu-select-all-forn').addEventListener('change', e => {
+            document.querySelectorAll('.alu-forn-chk').forEach(cb => cb.checked = e.target.checked);
+            refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered());
+        });
+        // Select-all: Cliente
+        document.getElementById('alu-select-all-cli').addEventListener('change', e => {
+            document.querySelectorAll('.alu-cli-chk').forEach(cb => cb.checked = e.target.checked);
+            refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered());
+        });
+        // Select-all: Linha
+        document.getElementById('alu-select-all-linha').addEventListener('change', e => {
+            document.querySelectorAll('.alu-linha-chk').forEach(cb => cb.checked = e.target.checked);
+            refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered());
+        });
+
+        document.querySelectorAll('.alu-forn-chk').forEach(cb => cb.addEventListener('change', () => { updateAluSelectAllForn(); refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered()); }));
+        document.querySelectorAll('.alu-cli-chk').forEach(cb => cb.addEventListener('change', () => { updateAluSelectAllCli(); refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered()); }));
+        document.querySelectorAll('.alu-linha-chk').forEach(cb => cb.addEventListener('change', () => { updateAluSelectAllLinha(); refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered()); }));
         document.getElementById('alu-search').addEventListener('input', e => { alugueisSearchTerm = e.target.value.trim().toLowerCase(); refreshAluActiveBadge(); updateAlugueisView(getAlugueisFiltered()); });
         document.getElementById('alu-clear').addEventListener('click', () => {
             document.querySelectorAll('.alu-forn-chk, .alu-cli-chk, .alu-linha-chk, .alu-comp-chk, .alu-year-chk').forEach(cb=>cb.checked=false);
             const allComp = document.getElementById('alu-select-all-comp'); if(allComp){ allComp.checked=false; allComp.indeterminate=false; }
+            const allForn = document.getElementById('alu-select-all-forn'); if(allForn){ allForn.checked=false; allForn.indeterminate=false; }
+            const allCli = document.getElementById('alu-select-all-cli'); if(allCli){ allCli.checked=false; allCli.indeterminate=false; }
+            const allLinha = document.getElementById('alu-select-all-linha'); if(allLinha){ allLinha.checked=false; allLinha.indeterminate=false; }
             document.getElementById('alu-search').value=''; alugueisSearchTerm='';
             refreshAluActiveBadge();
             updateAlugueisView(getAlugueisFiltered());
