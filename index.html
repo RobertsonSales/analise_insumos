@@ -9,75 +9,77 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, 'Inter', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background: linear-gradient(135deg, #f4f9ff 0%, #eef2f8 100%); padding: 16px 12px; min-height: 100vh; }
+        body { background: linear-gradient(135deg, #f5f8fc 0%, #eef2f9 100%); padding: 16px 12px; min-height: 100vh; }
         .dashboard-container { max-width: 1600px; margin: 0 auto; }
         .sticky-header { position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #f4f9ff 0%, #eef2f8 100%); border-radius: 0 0 28px 28px; margin: -16px -12px 20px -12px; padding: 16px 12px 0 12px; box-shadow: 0 6px 14px rgba(0,0,0,0.05); }
-        .dashboard-header { background: linear-gradient(115deg, #0a2a3b 0%, #0f3e4f 100%); border-radius: 28px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 12px 20px rgba(0,0,0,0.08); color: white; }
-        .dashboard-header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .dashboard-header { background: linear-gradient(115deg, #0a2a3b 0%, #0f3e4f 100%); border-radius: 28px; padding: 24px 28px; margin-bottom: 20px; box-shadow: 0 12px 28px rgba(10,42,59,0.12); color: white; transition: all 0.3s ease; }
+        .dashboard-header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: 800; letter-spacing: -0.3px; }
         .upload-area { background: white; border-radius: 28px; padding: 16px 20px; margin-bottom: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .upload-box { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-        .btn-upload, .export-btn, .btn-analysis { background: linear-gradient(135deg, #0b2b40 0%, #144b5c 100%); color: white; border: none; padding: 10px 20px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-analysis { background: linear-gradient(135deg, #6b4fa8 0%, #4a2e7a 100%); }
-        .btn-alugueis { background: linear-gradient(135deg, #2c6e4f 0%, #1e4a36 100%); }
-        .export-btn.pdf-btn { background: linear-gradient(135deg, #b6405e 0%, #8e2e4a 100%); }
-        .btn-upload:hover, .export-btn:hover:not(:disabled), .btn-analysis:hover:not(:disabled), .btn-alugueis:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(11,43,64,0.2); }
+        .btn-upload, .export-btn, .btn-analysis { background: linear-gradient(135deg, #0b2b40 0%, #144b5c 100%); color: white; border: none; padding: 11px 22px; border-radius: 40px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(11,43,64,0.15); }
+        .btn-analysis { background: linear-gradient(135deg, #7c5fb8 0%, #5a3e8a 100%); box-shadow: 0 4px 12px rgba(107,79,168,0.2); }
+        .btn-alugueis { background: linear-gradient(135deg, #2c6e4f 0%, #1e4a36 100%); box-shadow: 0 4px 12px rgba(44,110,79,0.2); }
+        .export-btn.pdf-btn { background: linear-gradient(135deg, #c85070 0%, #9e3a54 100%); box-shadow: 0 4px 12px rgba(182,64,94,0.2); }
+        .btn-upload:hover, .export-btn:hover:not(:disabled), .btn-analysis:hover:not(:disabled), .btn-alugueis:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(11,43,64,0.25); }
         .file-info { background: #eef2fa; padding: 6px 16px; border-radius: 30px; font-size: 0.8rem; font-weight: 500; color: #1a3e54; }
         .filters-bar { background: white; border-radius: 0 0 24px 24px; padding: 18px 20px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
         .filter-group { flex: 1 1 200px; min-width: 180px; display: flex; flex-direction: column; gap: 6px; }
         .filter-group label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2c5a6e; }
-        .filter-group input { background: #fcfef9; border: 2px solid #dce3ec; padding: 10px 12px; border-radius: 20px; font-size: 0.8rem; outline: none; transition: 0.2s; }
-        .filter-group input:focus { border-color: #0b2b40; box-shadow: 0 0 0 3px rgba(11,43,64,0.1); }
+        .filter-group input { background: #fcfef9; border: 2px solid #dce3ec; padding: 11px 14px; border-radius: 20px; font-size: 0.8rem; outline: none; transition: all 0.3s ease; }
+        .filter-group input:focus { border-color: #0b2b40; box-shadow: 0 0 0 4px rgba(11,43,64,0.15); }
         .checkbox-filter-container { background: #fcfef9; border: 2px solid #dce3ec; padding: 10px; border-radius: 15px; max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
         .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
-        .checkbox-item:hover { background: #f0f4fa; }
+        .checkbox-item:hover { background: #f0f4fa; transition: background 0.2s ease; }
         .checkbox-item input { width: 15px; height: 15px; margin: 0; }
         .year-check-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f0f4fa; padding: 6px 12px; border-radius: 40px; }
         .year-checkbox { display: flex; align-items: center; gap: 5px; background: white; padding: 3px 12px; border-radius: 30px; cursor: pointer; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 18px; margin-bottom: 32px; }
-        .kpi-card { background: white; padding: 22px 24px 20px; border-radius: 24px; border-left: 6px solid; box-shadow: 0 6px 18px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+        .kpi-card { background: white; padding: 24px 26px 22px; border-radius: 24px; border-left: 6px solid; box-shadow: 0 8px 24px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 6px; overflow: hidden; transition: all 0.3s ease; }
         .kpi-card.revenue { border-left-color: #0b2b40; background: linear-gradient(135deg, #fff 60%, #eef4fa 100%); }
         .kpi-card.volume  { border-left-color: #dd8c4a; background: linear-gradient(135deg, #fff 60%, #fdf5ec 100%); }
         .kpi-card.clients { border-left-color: #1f6e43; background: linear-gradient(135deg, #fff 60%, #edf7f1 100%); }
         .kpi-card.nfs     { border-left-color: #6b4fa8; background: linear-gradient(135deg, #fff 60%, #f3f0fa 100%); }
-        .kpi-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #7a96b0; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .kpi-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #6b8ba6; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
         .kpi-value { font-size: clamp(1.3rem, 2.2vw, 2.2rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; word-break: break-word; overflow-wrap: break-word; }
         .kpi-card.revenue .kpi-value { color: #0b2b40; }
         .kpi-card.volume  .kpi-value { color: #b46a1e; }
         .kpi-card.clients .kpi-value { color: #1a5c38; }
         .kpi-card.nfs     .kpi-value { color: #4d3480; }
-        .chart-card { background: white; border-radius: 24px; padding: 18px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
-        .chart-card h3 { font-size: 1rem; font-weight: 600; color: #1e2f47; border-left: 4px solid #0b2b40; padding-left: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .chart-card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 24px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); transition: all 0.3s ease; }
+        .chart-card h3 { font-size: 1.05rem; font-weight: 700; color: #0a2a3b; border-left: 4px solid #0b2b40; padding-left: 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; letter-spacing: -0.2px; }
         .chart-card h3 i.toggle-icon { font-size: 1rem; transition: transform 0.2s; }
         .chart-card .collapsible-content { transition: all 0.2s ease; }
         .charts-row { display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px; }
         @media (min-width: 780px) { .charts-row { grid-template-columns: 1fr 1fr; } .dashboard-header h1 { font-size: 1.9rem; } }
-        .table-wrapper { background: white; border-radius: 24px; overflow-x: auto; }
+        .table-wrapper { background: white; border-radius: 24px; overflow-x: auto; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.73rem; min-width: 900px; }
-        .data-table th { text-align: left; padding: 14px 12px; background: #0b2b40; color: white; position: sticky; top: 0; }
-        .data-table td { padding: 10px 12px; border-bottom: 1px solid #eef3f8; }
-        .badge-light { background: #eef2fa; padding: 4px 10px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; color: #0b2b40; display: inline-block; }
+        .data-table th { text-align: left; padding: 16px 14px; background: #0a2a3b; color: white; position: sticky; top: 0; font-weight: 700; letter-spacing: 0.3px; }
+        .data-table td { padding: 12px 14px; border-bottom: 1px solid #f0f4f9; }
+        .badge-light { background: #eef2fa; padding: 5px 12px; border-radius: 40px; font-size: 0.72rem; font-weight: 700; color: #0a2a3b; display: inline-block; letter-spacing: 0.2px; }
         .progress-container { width: 100%; background: #e0e7ef; border-radius: 40px; margin-bottom: 20px; height: 32px; display: none; align-items: center; }
         .progress-bar { height: 100%; background: linear-gradient(90deg,#0b2b40,#2a7f6e); width: 0%; border-radius: 40px; transition: width 0.2s; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; color: white; font-weight: bold; font-size: 0.7rem; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 32px; width: 95%; max-width: 1400px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
-        .modal-header { background: #0b2b40; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { background: #0a2a3b; color: white; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(10,42,59,0.15); }
         .modal-close { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
-        .modal-body { flex: 1; overflow-y: auto; padding: 16px; background: #f9fafc; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 20px; background: #f9fafc; }
         .modal-footer { padding: 14px 20px; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #e2e8f0; }
-        .modal-btn { padding: 10px 20px; border-radius: 40px; font-weight: 600; border: none; cursor: pointer; }
-        .modal-btn-download { background: #0b2b40; color: white; }
+        .modal-btn { padding: 11px 22px; border-radius: 40px; font-weight: 700; border: none; cursor: pointer; transition: all 0.3s ease; }
+        .modal-btn-download { background: #0b2b40; color: white; box-shadow: 0 4px 12px rgba(11,43,64,0.15); }
+        .modal-btn-download:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(11,43,64,0.25); }
+        .modal-btn:hover:not(:disabled) { transform: translateY(-2px); }
         .upload-area-modal { background: #f0f4fa; border: 2px dashed #0b2b40; border-radius: 28px; padding: 40px; text-align: center; margin-bottom: 24px; cursor: pointer; transition: 0.2s; }
         .upload-area-modal:hover { background: #e6edf6; }
         .alugueis-filters { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; background: white; padding: 16px; border-radius: 24px; }
         .linhas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 14px; margin-top: 16px; }
-        .linha-card { background: #f8fafc; padding: 16px 18px; border-radius: 20px; border-left: 4px solid #0b2b40; }
-        .linha-nome { font-weight: 700; font-size: 0.85rem; margin-bottom: 10px; color: #0b2b40; }
+        .linha-card { background: #f8fafc; padding: 18px 20px; border-radius: 20px; border-left: 4px solid #0b2b40; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: all 0.3s ease; }
+        .linha-nome { font-weight: 800; font-size: 0.88rem; margin-bottom: 10px; color: #0a2a3b; letter-spacing: -0.2px; }
         .linha-stats { display: flex; gap: 14px; flex-wrap: wrap; }
         .linha-stats span { font-size: 0.92rem; font-weight: 800; color: #1a344d; background: white; border-radius: 10px; padding: 4px 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
         .clientes-resumo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 16px; margin-top: 16px; }
-        .cliente-resumo-card { background: #f8fafc; border-radius: 20px; padding: 14px 18px; border-left: 4px solid #1f6e43; }
-        .cliente-nome { font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: #0b2b40; }
+        .cliente-resumo-card { background: #f8fafc; border-radius: 20px; padding: 16px 20px; border-left: 4px solid #1f6e43; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: all 0.3s ease; }
+        .cliente-nome { font-weight: 800; font-size: 0.93rem; margin-bottom: 8px; color: #0a2a3b; letter-spacing: -0.2px; }
         .cliente-resumo-card > div:last-child { font-size: 0.95rem; font-weight: 800; color: #1a5c38; display: flex; gap: 14px; flex-wrap: wrap; }
         footer { text-align: center; font-size: 0.7rem; color: #7e95ae; margin: 20px 0 10px; }
         .empty-state { text-align: center; padding: 40px; color: #8ba0bc; }
@@ -107,6 +109,18 @@
         .analysis-kpi-card[style*="dd8c4a"] .analysis-kpi-value { color: #b46a1e; }
         .analysis-kpi-card[style*="1f6e43"] .analysis-kpi-value { color: #1a5c38; }
         .analysis-kpi-card[style*="6b4fa8"] .analysis-kpi-value { color: #4d3480; }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+        .linha-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .cliente-resumo-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .chart-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .table-wrapper:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .upload-area { box-shadow: 0 6px 16px rgba(0,0,0,0.04); }
+        .filters-bar { box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .checkbox-filter-container { box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        .year-check-group { box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        .year-checkbox:hover { background: #f5f8fc; transition: background 0.2s ease; }
+        .file-info { box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; } .charts-row { grid-template-columns: 1fr; } .dashboard-header { padding: 18px 20px; } .dashboard-header h1 { font-size: 1.3rem; } .modal-content { border-radius: 24px; } }
     </style>
 </head>
 <body>
@@ -188,6 +202,12 @@
             <i class="fas fa-chevron-down toggle-icon" id="extratoToggleIcon"></i>
         </h3>
         <div id="extratoCollapsibleContent" class="collapsible-content" style="display: none;">
+            <div id="extratoProgressContainer" style="display: none; padding: 20px; text-align: center;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #0b2b40; margin-bottom: 10px;">Renderizando extrato... <span id="extratoProgressValue">0%</span></div>
+                <div style="width: 100%; background: #e0e7ef; border-radius: 20px; height: 12px; overflow: hidden;">
+                    <div id="extratoProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0b2b40, #2a7f6e); transition: width 0.1s;"></div>
+                </div>
+            </div>
             <div class="table-wrapper">
                 <table class="data-table" id="extractTable">
                     <thead><tr><th>Data</th><th>NF</th><th>Competência</th><th>Fornecedor</th><th>Cliente</th><th>Linha</th><th>Produto</th><th>Qtd</th><th>Valor Líquido</th></tr></thead>
@@ -310,7 +330,7 @@
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = items.map(item => `<label class="checkbox-item"><input type="checkbox" value="${escapeHtml(item)}" class="${namePrefix}-chk"><span>${escapeHtml(item)}</span></label>`).join('');
-        container.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => { updateSelectAllState(containerId); applyFiltersAndRender(); refreshInsActiveBadge(); }));
+        container.querySelectorAll('input').forEach(cb => cb.addEventListener('change', async () => { updateSelectAllState(containerId); await applyFiltersAndRender(); refreshInsActiveBadge(); }));
     }
     function getSelectedCheckboxes(containerId) { const container = document.getElementById(containerId); if (!container) return []; return Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value); }
     function setSelectedCheckboxes(containerId, values) { const container = document.getElementById(containerId); if (!container) return; container.querySelectorAll('input').forEach(cb => { if (values.includes(cb.value)) cb.checked = true; }); updateSelectAllState(containerId); }
@@ -348,13 +368,13 @@
         createCheckboxList('periodFilter', uniquePeriods, 'period'); createCheckboxList('linhaFilter', uniqueLinhas, 'linha'); createCheckboxList('clienteFilter', uniqueClientes, 'cliente'); createCheckboxList('fornecedorFilter', uniqueFornecedores, 'fornecedor');
         setSelectedCheckboxes('periodFilter', selPeriods); setSelectedCheckboxes('linhaFilter', selLinhas); setSelectedCheckboxes('clienteFilter', selClientes); setSelectedCheckboxes('fornecedorFilter', selFornecedores);
     }
-    function syncYearWithPeriods() {
+    async function syncYearWithPeriods() {
         if(!dataLoaded) return;
         const selectedYears = Array.from(document.querySelectorAll('.year-chk:checked')).map(cb => cb.value);
         let periodsToSelect = new Set();
         selectedYears.forEach(year => { let periods = aggregated.periodsByYear.get(year) || []; periods.forEach(p => periodsToSelect.add(p)); });
         document.querySelectorAll('.period-chk').forEach(cb => cb.checked = periodsToSelect.has(cb.value));
-        updateSelectAllState('periodFilter'); applyFiltersAndRender(); refreshInsActiveBadge();
+        updateSelectAllState('periodFilter'); await applyFiltersAndRender(); refreshInsActiveBadge();
     }
     function handleFile(e) {
         let file = e.target.files[0];
@@ -468,19 +488,19 @@
         let yearContainer = document.getElementById('yearFilterContainer');
         yearContainer.innerHTML = `<span>ANOS:</span>`;
         aggregated.uniqueAnos.forEach(ano => { let div = document.createElement('div'); div.className = 'year-checkbox'; div.innerHTML = `<input type="checkbox" id="year_${ano}" value="${ano}" class="year-chk"><label>${ano}</label>`; yearContainer.appendChild(div); });
-        document.querySelectorAll('.year-chk').forEach(cb => cb.addEventListener('change', () => { syncYearWithPeriods(); refreshInsActiveBadge(); }));
-        document.getElementById('searchInput').addEventListener('input', () => { updateFilterOptionsBySearch(); applyFiltersAndRender(); refreshInsActiveBadge(); });
-        document.getElementById('selectAllPeriods').addEventListener('change', (e) => { toggleAllInContainer('periodFilter', e.target.checked); refreshInsActiveBadge(); });
-        document.getElementById('selectAllLinhas').addEventListener('change', (e) => { toggleAllInContainer('linhaFilter', e.target.checked); refreshInsActiveBadge(); });
-        document.getElementById('selectAllClientes').addEventListener('change', (e) => { toggleAllInContainer('clienteFilter', e.target.checked); refreshInsActiveBadge(); });
-        document.getElementById('selectAllFornecedores').addEventListener('change', (e) => { toggleAllInContainer('fornecedorFilter', e.target.checked); refreshInsActiveBadge(); });
-        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+        document.querySelectorAll('.year-chk').forEach(cb => cb.addEventListener('change', async () => { await syncYearWithPeriods(); refreshInsActiveBadge(); }));
+        document.getElementById('searchInput').addEventListener('input', async () => { updateFilterOptionsBySearch(); await applyFiltersAndRender(); refreshInsActiveBadge(); });
+        document.getElementById('selectAllPeriods').addEventListener('change', async (e) => { await toggleAllInContainer('periodFilter', e.target.checked); refreshInsActiveBadge(); });
+        document.getElementById('selectAllLinhas').addEventListener('change', async (e) => { await toggleAllInContainer('linhaFilter', e.target.checked); refreshInsActiveBadge(); });
+        document.getElementById('selectAllClientes').addEventListener('change', async (e) => { await toggleAllInContainer('clienteFilter', e.target.checked); refreshInsActiveBadge(); });
+        document.getElementById('selectAllFornecedores').addEventListener('change', async (e) => { await toggleAllInContainer('fornecedorFilter', e.target.checked); refreshInsActiveBadge(); });
+        document.getElementById('clearFiltersBtn').addEventListener('click', async () => {
             document.querySelectorAll('.year-chk').forEach(cb=>cb.checked=false);
             document.querySelectorAll('#ins-filters-panel input[type="checkbox"]').forEach(cb=>cb.checked=false);
             document.getElementById('searchInput').value = '';
             restoreOriginalFilterOptions();
+            await applyFiltersAndRender();
             refreshInsActiveBadge();
-            applyFiltersAndRender();
         });
     }
     function refreshInsActiveBadge() {
@@ -545,10 +565,63 @@
     let clientesCollapsed = true;
     function renderResumoClientes(data){ let mapCliente = new Map(); data.forEach(row=>{ if(!mapCliente.has(row.cliente)) mapCliente.set(row.cliente,{valor:0,qtde:0}); let acc=mapCliente.get(row.cliente); acc.valor+=row.valor_liquido; acc.qtde+=row.qtde; }); let container=document.getElementById('clientesResumoGrid'); let section=document.getElementById('clientesResumoSection'); if(mapCliente.size===0 || !isAnyFilterActive()){ section.style.display='none'; return; } section.style.display='block'; let html=''; for(let [cliente,vals] of mapCliente.entries()){ html+=`<div class="cliente-resumo-card"><div class="cliente-nome">${escapeHtml(cliente)}</div><div>💰 ${formatMoney(vals.valor)} &nbsp;📦 ${vals.qtde.toLocaleString('pt-BR')} itens</div></div>`; } container.innerHTML=html; if(clientesCollapsed) document.getElementById('clientesCollapsibleContent').style.display = 'none'; else document.getElementById('clientesCollapsibleContent').style.display = 'block'; }
     let extratoCollapsed = true;
-    function renderExtratoTable(data){ const tbody = document.getElementById('tableBody'); const emptyDiv = document.getElementById('tableEmpty'); if(!data.length){ tbody.innerHTML = ''; emptyDiv.style.display = 'block'; document.getElementById('extratoCollapsibleContent').style.display = 'none'; return; } emptyDiv.style.display = 'none'; let html = ''; let lastForn = null; data.forEach(r => { if (r.fornecedor_completo !== lastForn) { lastForn = r.fornecedor_completo; html += `<tr class="group-header-row"><td colspan="9">🏭 ${escapeHtml(r.fornecedor_completo)}</td></tr>`; } html += `<tr><td>${escapeHtml(r.dataOriginal||'—')}</td><td>${escapeHtml(r.nf||'—')}</td><td>${escapeHtml(r.competencia)}</td><td>${escapeHtml(r.fornecedor_completo)}</td><td>${escapeHtml(r.cliente)}</td><td><span class="badge-light">${escapeHtml(r.linha_atuacao)}</span></td><td>${escapeHtml(r.produto.substring(0,80))}</td><td>${r.qtde.toLocaleString('pt-BR')}</td><td>${formatMoney(r.valor_liquido)}</td></tr>`; }); tbody.innerHTML = html; if(extratoCollapsed) document.getElementById('extratoCollapsibleContent').style.display = 'none'; else document.getElementById('extratoCollapsibleContent').style.display = 'block'; }
+    async function renderExtratoTable(data){ 
+        const tbody = document.getElementById('tableBody'); 
+        const emptyDiv = document.getElementById('tableEmpty'); 
+        const progContainer = document.getElementById('extratoProgressContainer');
+        const progBar = document.getElementById('extratoProgressBar');
+        const progVal = document.getElementById('extratoProgressValue');
+        const tableWrapper = document.querySelector('#extratoCollapsibleContent .table-wrapper');
+
+        if(!data.length){ 
+            tbody.innerHTML = ''; 
+            emptyDiv.style.display = 'block'; 
+            tableWrapper.style.display = 'none';
+            if(extratoCollapsed) document.getElementById('extratoCollapsibleContent').style.display = 'none'; 
+            else document.getElementById('extratoCollapsibleContent').style.display = 'block';
+            return; 
+        } 
+
+        emptyDiv.style.display = 'none'; 
+        tableWrapper.style.display = 'none';
+        progContainer.style.display = 'block';
+        if(!extratoCollapsed) document.getElementById('extratoCollapsibleContent').style.display = 'block';
+
+        let html = ''; 
+        let lastForn = null; 
+        const total = data.length;
+        const chunkSize = 150; 
+
+        for (let i = 0; i < total; i++) {
+            const r = data[i];
+            if (r.fornecedor_completo !== lastForn) { 
+                lastForn = r.fornecedor_completo; 
+                html += `<tr class="group-header-row"><td colspan="9">🏭 ${escapeHtml(r.fornecedor_completo)}</td></tr>`; 
+            } 
+            html += `<tr><td>${escapeHtml(r.dataOriginal||'—')}</td><td>${escapeHtml(r.nf||'—')}</td><td>${escapeHtml(r.competencia)}</td><td>${escapeHtml(r.fornecedor_completo)}</td><td>${escapeHtml(r.cliente)}</td><td><span class="badge-light">${escapeHtml(r.linha_atuacao)}</span></td><td>${escapeHtml(r.produto.substring(0,80))}</td><td>${r.qtde.toLocaleString('pt-BR')}</td><td>${formatMoney(r.valor_liquido)}</td></tr>`;
+            
+            if (i > 0 && i % chunkSize === 0) {
+                const pct = Math.floor((i / total) * 100);
+                progBar.style.width = pct + '%';
+                progVal.innerText = pct + '%';
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+        }
+
+        tbody.innerHTML = html; 
+        progBar.style.width = '100%';
+        progVal.innerText = '100%';
+        
+        setTimeout(() => {
+            progContainer.style.display = 'none';
+            tableWrapper.style.display = 'block';
+            if(extratoCollapsed) document.getElementById('extratoCollapsibleContent').style.display = 'none'; 
+            else document.getElementById('extratoCollapsibleContent').style.display = 'block';
+        }, 300);
+    }
     function prepareChartsData(data){ let linhaMap=new Map(); data.forEach(i=>linhaMap.set(i.linha_atuacao, (linhaMap.get(i.linha_atuacao)||0)+i.valor_liquido)); let labels=Array.from(linhaMap.keys()), values=labels.map(l=>linhaMap.get(l)); let monthMap=new Map(); data.forEach(i=>monthMap.set(i.competencia, (monthMap.get(i.competencia)||0)+i.valor_liquido)); let months=Array.from(monthMap.keys()).sort((a,b)=>{ let ma=a.match(/(\d{2})\/(\d{4})/), mb=b.match(/(\d{2})\/(\d{4})/); return ma?Number(ma[2])*100+Number(ma[1]) - (Number(mb[2])*100+Number(mb[1])):0; }); return { labelsLinha:labels, valuesLinha:values, sortedMonths:months, monthlyValues:months.map(m=>monthMap.get(m)) }; }
     function updateCharts(cd){ if(charts.linhaChart) charts.linhaChart.destroy(); if(charts.monthlyChart) charts.monthlyChart.destroy(); charts.linhaChart = new Chart(document.getElementById('linhaChart'),{ type:'bar', data:{ labels:cd.labelsLinha, datasets:[{ label:'Faturamento (R$)', data:cd.valuesLinha, backgroundColor:'#0b2b40' }] }, options:{ responsive:true } }); charts.monthlyChart = new Chart(document.getElementById('monthlyChart'),{ type:'line', data:{ labels:cd.sortedMonths, datasets:[{ label:'Mensal líquido', data:cd.monthlyValues, borderColor:'#dd8c4a', fill:true }] }, options:{ responsive:true } }); }
-    function applyFiltersAndRender(){ if(!dataLoaded) return; let filtered=getFilteredData(); let kpis=computeKPIs(filtered); renderKPIs(kpis); renderResumoLinhas(filtered); renderResumoClientes(filtered); let chartData=prepareChartsData(filtered); updateCharts(chartData); renderExtratoTable(filtered); }
+    async function applyFiltersAndRender(){ if(!dataLoaded) return; let filtered=getFilteredData(); let kpis=computeKPIs(filtered); renderKPIs(kpis); renderResumoLinhas(filtered); renderResumoClientes(filtered); let chartData=prepareChartsData(filtered); updateCharts(chartData); await renderExtratoTable(filtered); }
     
     document.getElementById('uploadBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
     document.getElementById('fileInput').addEventListener('change', handleFile);
@@ -1052,7 +1125,7 @@
         document.getElementById('alugueisDashboardContainer').innerHTML = `
         <div class="chart-card" style="margin-bottom:16px; padding:0; overflow:hidden;">
             <div id="alu-filters-toggle" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 18px; background:linear-gradient(115deg,#0a2a3b,#0f3e4f); border-radius:24px 24px 0 0;">
-                <span style="color:white; font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:10px; white-space:nowrap;"><i class="fas fa-filter"></i> Filtros</span>
+                <span style="color:white; font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:10px; white-space:nowrap;"><i class="fas fa-filter"></i> Clique aqui para recolher ou expandir a barra de Filtros</span>
                 <div id="alu-pills-bar" class="filter-pills-bar"></div>
                 <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
                     <span id="alu-active-badge" style="display:none;" class="filter-pill-count"></span>
