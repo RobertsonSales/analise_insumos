@@ -483,14 +483,30 @@
     const formatMoney = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const escapeHtml = s => { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; };
     const excelSerialToDate = serial => { let d = XLSX.SSF.parse_date_code(serial); return d ? new Date(d.y, d.m-1, d.d) : null; };
+    /*  CORREÇÃO FUSO HORÁRIO — parseDateValue
+        Problema: O SheetJS (cellDates:true) cria objetos Date à meia-noite UTC.
+        Quando o browser está em UTC-3 (Brasil), getDate()/getMonth() retornam
+        o dia/mês LOCAL (UTC-3), que é o dia anterior para datas à meia-noite UTC.
+        Exemplo: 01/06/2026 00:00 UTC → 31/05/2026 21:00 UTC-3 → competência "05/2026".
+        Solução: Extrair componentes UTC e construir um Date no fuso LOCAL,
+        garantindo que getDate()/getMonth() retornem o dia/mês corretos do Excel.
+    */
     const parseDateValue = val => {
         if (!val && val !== 0) return null;
-        if (val instanceof Date) return new Date(val.getTime());
+        if (val instanceof Date) return new Date(val.getUTCFullYear(), val.getUTCMonth(), val.getUTCDate());
         if (typeof val === 'number') return excelSerialToDate(val);
         let txt = String(val).trim();
         if (/^\d{1,2}\/\d{4}$/.test(txt)) return null;
+        /* CORREÇÃO FUSO HORÁRIO — strings no formato ISO (YYYY-MM-DD)
+           new Date('2026-06-01') cria meia-noite UTC; aplicamos mesma correção. */
         let d = new Date(txt);
-        return isNaN(d.getTime()) ? null : d;
+        if (isNaN(d.getTime())) return null;
+        /* Se a string era parseada sem componente de hora (ex: YYYY-MM-DD),
+           o resultado é meia-noite UTC — corrigir para data local. */
+        if (txt.match(/^\d{4}-\d{2}-\d{2}$/) || (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0 && d.getMilliseconds() === 0)) {
+            return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        }
+        return d;
     };
     const formatDateBr = date => date ? `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}` : '';
     const competenciaFromDate = date => date ? `${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}` : '';
@@ -531,7 +547,13 @@
     function mapColumnsFromHeader(headerRow){ let col={}; for(let j=0;j<headerRow.length;j++){ let cell=normalizeText(headerRow[j]); if(cell==='NF-E') col.nf=j; else if(cell==='CLIENTE') col.cliente=j; else if(cell==='RAZAO SOCIAL') col.razao=j; else if(cell==='VALOR DESCONTO') col.desconto=j; else if(cell==='VALOR TOTAL') col.total=j; else if(cell==='DATA DE SAIDA') col.dataSaida=j; else if(cell==='DATA EMISSAO') col.dataEmissao=j; else if(cell==='SITUACAO') col.situacao=j; } if(col.cliente===undefined&&col.razao!==undefined) col.cliente=col.razao; return col; }
     function isValidNFNumber(v){ let s=String(v).trim(); return /^\d{1,8}$/.test(s); }
     function isTotalLine(row,col){ let first=row[0]?normalizeText(row[0]):''; if(first.includes('QUANTIDADE')||first.includes('VALOR TOTAL')||first==='PRODUTO') return true; let razao=col.razao!==undefined&&row[col.razao]?normalizeText(row[col.razao]):''; if(razao.includes('QUANTIDADE')||razao.includes('TOTAL')) return true; if(parseNumber(row[col.total])>0&&razao===''&&!isValidNFNumber(row[col.nf])) return true; return false; }
-    function parseInvoiceWorksheet(matrix){ const headerIdx=findHeaderRowIndex(matrix); if(headerIdx===-1) return []; const col=mapColumnsFromHeader(matrix[headerIdx]); if(col.nf===undefined||(col.cliente===undefined&&col.razao===undefined)) return []; let results=[], i=headerIdx+1; while(i<matrix.length){ let row=matrix[i]; if(!row||row.every(cell=>!cell||(typeof cell==='string'&&cell.trim()===''))){ i++; continue; } if(isTotalLine(row,col)){ i++; continue; } const nfValue=row[col.nf]; const clienteValue=col.cliente!==undefined?row[col.cliente]:row[col.razao]; const isInvoiceRow=nfValue&&isValidNFNumber(nfValue)&&clienteValue&&String(clienteValue).trim().length>0; if(isInvoiceRow){ let fornecedor=(col.razao!==undefined&&row[col.razao])?row[col.razao]:(row[col.cliente]||''); let cliente=(col.cliente!==undefined&&row[col.cliente])?row[col.cliente]:fornecedor; let desconto=parseNumber(row[col.desconto]); let totalNota=parseNumber(row[col.total]); let situacao=(col.situacao!==undefined)?normalizeText(row[col.situacao]||''):''; let dataRaw=(col.dataSaida!==undefined&&row[col.dataSaida])?row[col.dataSaida]:(col.dataEmissao!==undefined?row[col.dataEmissao]:null); let nf=String(row[col.nf]).trim(); if(situacao==='CANCELADO'||situacao==='DENEGADO'||situacao==='REJEITADO'){ i++; continue; } let items=[]; i++; while(i<matrix.length){ let itemRow=matrix[i]; if(!itemRow||itemRow.every(cell=>!cell||(typeof cell==='string'&&cell.trim()===''))){ i++; continue; } const nextNf=itemRow[col.nf]; const nextCliente=col.cliente!==undefined?itemRow[col.cliente]:itemRow[col.razao]; if(nextNf&&isValidNFNumber(nextNf)&&nextCliente&&String(nextCliente).trim().length>0) break; const produto=itemRow[0]?String(itemRow[0]).trim():''; if(produto&&produto!==''&&normalizeText(produto)!=='PRODUTO'){ const qtde=parseNumber(itemRow[3]); const valorUnitario=parseNumber(itemRow[4]); const valorBruto=parseNumber(itemRow[11])||(qtde*valorUnitario); if(qtde>0||valorBruto>0) items.push({produto:produto,codigo:itemRow[1]?String(itemRow[1]).trim():'',qtde:qtde,valor_bruto:valorBruto}); } i++; } if(items.length===0) continue; let totalBrutoItems=items.reduce((s,it)=>s+it.valor_bruto,0); let descontoEfetivo=desconto; if(totalNota>0&&totalBrutoItems>totalNota&&descontoEfetivo===0) descontoEfetivo=totalBrutoItems-totalNota; descontoEfetivo=round2(Math.max(0,descontoEfetivo)); let restante=descontoEfetivo; items.forEach((item,idx)=>{ let rateio=0; if(descontoEfetivo>0&&totalBrutoItems>0){ if(idx===items.length-1) rateio=restante; else{ rateio=round2((item.valor_bruto/totalBrutoItems)*descontoEfetivo); rateio=Math.min(rateio,restante); restante=round2(restante-rateio); } } const valorLiquido=round2(item.valor_bruto-rateio); if(valorLiquido<0) return; const dataObj=parseDateValue(dataRaw); const competencia=competenciaFromDate(dataObj)||(dataRaw?String(dataRaw).slice(0,7).replace(/-/g,'/'):''); results.push({dataOriginal:dataObj?formatDateBr(dataObj):'',competencia:competencia,fornecedor_completo:fornecedor,fornecedor_primeiro:primeiroNome(fornecedor),cliente:cliente,linha_atuacao:inferLinhaAtuacao(item.produto,item.codigo),produto:item.produto,qtde:item.qtde,valor_bruto:item.valor_bruto,desconto_rateado:rateio,valor_liquido:valorLiquido,nf:nf}); }); } else i++; } return results; }
+    function parseInvoiceWorksheet(matrix){ const headerIdx=findHeaderRowIndex(matrix); if(headerIdx===-1) return []; const col=mapColumnsFromHeader(matrix[headerIdx]); if(col.nf===undefined||(col.cliente===undefined&&col.razao===undefined)) return []; let results=[], i=headerIdx+1; while(i<matrix.length){ let row=matrix[i]; if(!row||row.every(cell=>!cell||(typeof cell==='string'&&cell.trim()===''))){ i++; continue; } if(isTotalLine(row,col)){ i++; continue; } const nfValue=row[col.nf]; const clienteValue=col.cliente!==undefined?row[col.cliente]:row[col.razao]; const isInvoiceRow=nfValue&&isValidNFNumber(nfValue)&&clienteValue&&String(clienteValue).trim().length>0; if(isInvoiceRow){ let fornecedor=(col.razao!==undefined&&row[col.razao])?row[col.razao]:(row[col.cliente]||''); let cliente=(col.cliente!==undefined&&row[col.cliente])?row[col.cliente]:fornecedor; let desconto=parseNumber(row[col.desconto]); let totalNota=parseNumber(row[col.total]); let situacao=(col.situacao!==undefined)?normalizeText(row[col.situacao]||''):''; let dataRaw=(col.dataSaida!==undefined&&row[col.dataSaida])?row[col.dataSaida]:(col.dataEmissao!==undefined?row[col.dataEmissao]:null); let nf=String(row[col.nf]).trim(); if(situacao==='CANCELADO'||situacao==='DENEGADO'||situacao==='REJEITADO'){ i++; continue; } let items=[]; i++; while(i<matrix.length){ let itemRow=matrix[i]; if(!itemRow||itemRow.every(cell=>!cell||(typeof cell==='string'&&cell.trim()===''))){ i++; continue; } const nextNf=itemRow[col.nf]; const nextCliente=col.cliente!==undefined?itemRow[col.cliente]:itemRow[col.razao]; if(nextNf&&isValidNFNumber(nextNf)&&nextCliente&&String(nextCliente).trim().length>0) break; const produto=itemRow[0]?String(itemRow[0]).trim():''; if(produto&&produto!==''&&normalizeText(produto)!=='PRODUTO'){ const qtde=parseNumber(itemRow[3]); const valorUnitario=parseNumber(itemRow[4]); const valorBruto=parseNumber(itemRow[11])||(qtde*valorUnitario); if(qtde>0||valorBruto>0) items.push({produto:produto,codigo:itemRow[1]?String(itemRow[1]).trim():'',qtde:qtde,valor_bruto:valorBruto}); } i++; } if(items.length===0) continue; let totalBrutoItems=items.reduce((s,it)=>s+it.valor_bruto,0); /* CORREÇÃO — rateio de desconto/acréscimo proporcional:
+   Antes: usava o desconto explícito da NF e só tratava desconto implícito (itens > NF).
+   Isso causava diferenças quando: (a) NF total > soma itens (frete/seguro) ou
+   (b) o desconto explícito não coincidia exatamente com a diferença real.
+   Agora: calcula ajuste real (brutoItens - totalNota) para garantir que a soma
+   dos valor_liquido dos itens = exatamente o total da NF, com rateio proporcional. */
+let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let restante=descontoEfetivo; items.forEach((item,idx)=>{ let rateio=0; if(descontoEfetivo!==0&&totalBrutoItems>0){ if(idx===items.length-1) rateio=restante; else{ rateio=round2((item.valor_bruto/totalBrutoItems)*descontoEfetivo); rateio=descontoEfetivo>0?Math.min(rateio,restante):Math.max(rateio,restante); restante=round2(restante-rateio); } } const valorLiquido=round2(item.valor_bruto-rateio); if(valorLiquido<0) return; const dataObj=parseDateValue(dataRaw); const competencia=competenciaFromDate(dataObj)||(dataRaw?String(dataRaw).slice(0,7).replace(/-/g,'/'):''); results.push({dataOriginal:dataObj?formatDateBr(dataObj):'',competencia:competencia,fornecedor_completo:fornecedor,fornecedor_primeiro:primeiroNome(fornecedor),cliente:cliente,linha_atuacao:inferLinhaAtuacao(item.produto,item.codigo),produto:item.produto,qtde:item.qtde,valor_bruto:item.valor_bruto,desconto_rateado:rateio,valor_liquido:valorLiquido,nf:nf}); }); } else i++; } return results; }
     function cleanInvalidRecords(rows){ return rows.filter(r=>{ let f=r.fornecedor_completo||'', c=r.cliente||''; if(/(TOTAL|QUANTIDADE|SOMA|VALOR\s+TOTAL)/i.test(f)||/(TOTAL|QUANTIDADE|SOMA|VALOR\s+TOTAL)/i.test(c)) return false; if(/^\d{4,}$/.test(f.trim())||/^\d{4,}$/.test(c.trim())) return false; return true; }); }
     function extractNormalizedRows(ws){ let matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true}); if(!matrix.length) return []; return parseInvoiceWorksheet(matrix); }
     function updateProgress(p, text) {
@@ -1218,9 +1240,21 @@
             const fornecedor = String(row[6] || '').trim();
             if (!fatura || !cliente || valor === 0) continue;
             let dataObj = null;
-            if (emissaoRaw instanceof Date && !isNaN(emissaoRaw)) dataObj = emissaoRaw;
+            /* CORREÇÃO FUSO HORÁRIO — mesmo tratamento aplicado a datas de aluguéis.
+               Converte Date UTC (do SheetJS) para Date local (date-only). */
+            if (emissaoRaw instanceof Date && !isNaN(emissaoRaw)) dataObj = new Date(emissaoRaw.getUTCFullYear(), emissaoRaw.getUTCMonth(), emissaoRaw.getUTCDate());
             else if (typeof emissaoRaw === 'number') dataObj = excelSerialToDate(emissaoRaw);
-            else if (emissaoRaw) { const d = new Date(String(emissaoRaw)); if (!isNaN(d.getTime())) dataObj = d; }
+            else if (emissaoRaw) {
+                const d = new Date(String(emissaoRaw));
+                if (!isNaN(d.getTime())) {
+                    /* CORREÇÃO: se a string resultou em meia-noite UTC, converter para data local */
+                    if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0 && d.getMilliseconds() === 0) {
+                        dataObj = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+                    } else {
+                        dataObj = d;
+                    }
+                }
+            }
             results.push({ fatura, cliente, cnpj, valor: round2(valor), emissao: dataObj ? formatDateBr(dataObj) : (emissaoRaw ? String(emissaoRaw) : ''), competencia: dataObj ? competenciaFromDate(dataObj) : '', linha, fornecedor });
         }
         return results;
