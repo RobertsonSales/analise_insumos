@@ -235,6 +235,18 @@
         .data-table { width: 100%; border-collapse: collapse; font-size: 0.73rem; min-width: 900px; color: var(--text-primary); }
         .data-table th { text-align: left; padding: 14px 12px; background: var(--table-head-bg); color: var(--table-head-color); position: sticky; top: 0; }
         .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--row-border); }
+        .audit-badge { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-left: 10px; vertical-align: middle; }
+        .audit-pill { font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 40px; background: var(--chip-bg); color: var(--chip-text); }
+        .audit-pill.ok { background: rgba(44,110,79,0.14); color: var(--accent-clients-text); }
+        .audit-pill.warn { background: rgba(221,140,74,0.18); color: #b25e16; }
+        .audit-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 6px 0 12px; }
+        .audit-kpis > div { background: var(--card-bg-soft); border: 1px solid var(--border-color); border-radius: 16px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; }
+        .audit-kpis span { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+        .audit-kpis b { font-size: 1.02rem; color: var(--text-strong); }
+        .audit-note { font-size: 0.74rem; color: var(--text-secondary); margin: 8px 2px; line-height: 1.45; }
+        .audit-alerts { background: rgba(221,140,74,0.10); border-left: 4px solid #dd8c4a; border-radius: 10px; padding: 8px 12px; font-size: 0.74rem; color: var(--text-primary); display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+        .audit-h4 { font-size: 0.82rem; color: var(--text-strong); margin: 14px 2px 6px; }
+        .audit-table { min-width: 640px; }
         .badge-light { background: var(--chip-bg); padding: 4px 10px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; color: var(--chip-text); display: inline-block; }
         .progress-container { width: 100%; background: var(--progress-track); border-radius: 40px; margin-bottom: 20px; height: 32px; display: none; align-items: center; }
         .progress-bar { height: 100%; background: linear-gradient(90deg,#0b2b40,#2a7f6e); width: 0%; border-radius: 40px; transition: width 0.2s; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; color: white; font-weight: bold; font-size: 0.7rem; }
@@ -406,6 +418,13 @@
             <div class="linhas-grid" id="linhasGrid"></div>
         </div>
     </div>
+    <div class="chart-card" id="auditSection" style="display: none;">
+        <h3 id="auditToggle" class="retractable-header">
+            <span><i class="fas fa-scale-balanced"></i> Conciliação Insumos × Linhas <span id="auditBadge" class="audit-badge"></span></span>
+            <i class="fas fa-chevron-down toggle-icon" id="auditToggleIcon"></i>
+        </h3>
+        <div id="auditCollapsibleContent" class="collapsible-content" style="display: none;"><div id="auditContent"></div></div>
+    </div>
     <div class="chart-card" id="clientesResumoSection" style="display: none;">
         <h3 id="clientesResumoToggle" class="retractable-header">
             <span><i class="fas fa-building"></i> Clientes nos resultados atuais</span>
@@ -568,13 +587,338 @@
     function mapColumnsFromHeader(headerRow){ let col={}; for(let j=0;j<headerRow.length;j++){ let cell=normalizeText(headerRow[j]); if(cell==='NF-E') col.nf=j; else if(cell==='CLIENTE') col.cliente=j; else if(cell==='RAZAO SOCIAL') col.razao=j; else if(cell==='VALOR DESCONTO') col.desconto=j; else if(cell==='VALOR TOTAL') col.total=j; else if(cell==='DATA DE SAIDA') col.dataSaida=j; else if(cell==='DATA EMISSAO') col.dataEmissao=j; else if(cell==='SITUACAO') col.situacao=j; } if(col.cliente===undefined&&col.razao!==undefined) col.cliente=col.razao; return col; }
     function isValidNFNumber(v){ let s=String(v).trim(); return /^\d{1,8}$/.test(s); }
     function isTotalLine(row,col){ let first=row[0]?normalizeText(row[0]):''; if(first.includes('QUANTIDADE')||first.includes('VALOR TOTAL')||first==='PRODUTO') return true; let razao=col.razao!==undefined&&row[col.razao]?normalizeText(row[col.razao]):''; if(razao.includes('QUANTIDADE')||razao.includes('TOTAL')) return true; if(parseNumber(row[col.total])>0&&razao===''&&!isValidNFNumber(row[col.nf])) return true; return false; }
-    function parseInvoiceWorksheet(matrix){ const headerIdx=findHeaderRowIndex(matrix); if(headerIdx===-1) return []; const col=mapColumnsFromHeader(matrix[headerIdx]); if(col.nf===undefined||(col.cliente===undefined&&col.razao===undefined)) return []; let results=[], i=headerIdx+1; while(i<matrix.length){ let row=matrix[i]; if(!row||row.every(cell=>!cell||(typeof cell==='string'&&cell.trim()===''))){ i++; continue; } if(isTotalLine(row,col)){ i++; continue; } const nfValue=row[col.nf]; const clienteValue=col.cliente!==undefined?row[col.cliente]:row[col.razao]; const isInvoiceRow=nfValue&&isValidNFNumber(nfValue)&&clienteValue&&String(clienteValue).trim().length>0; if(isInvoiceRow){ let fornecedor=(col.razao!==undefined&&row[col.razao])?row[col.razao]:(row[col.cliente]||''); let cliente=(col.cliente!==undefined&&row[col.cliente])?row[col.cliente]:fornecedor; let desconto=parseNumber(row[col.desconto]); let totalNota=parseNumber(row[col.total]); let situacao=(col.situacao!==undefined)?normalizeText(row[col.situacao]||''):''; let dataRaw=(col.dataSaida!==undefined&&row[col.dataSaida])?row[col.dataSaida]:(col.dataEmissao!==undefined?row[col.dataEmissao]:null); let nf=String(row[col.nf]).trim(); let dataObjNota=parseDateValue(dataRaw)||findPlausibleDateInRow(row); if(situacao==='CANCELADO'||situacao==='DENEGADO'||situacao==='REJEITADO'){ i++; continue; } let items=[]; i++; while(i<matrix.length){ let itemRow=matrix[i]; if(!itemRow||itemRow.every(cell=>!cell||(typeof cell==='string'&&cell.trim()===''))){ i++; continue; } const nextNf=itemRow[col.nf]; const nextCliente=col.cliente!==undefined?itemRow[col.cliente]:itemRow[col.razao]; if(nextNf&&isValidNFNumber(nextNf)&&nextCliente&&String(nextCliente).trim().length>0) break; const produto=itemRow[0]?String(itemRow[0]).trim():''; if(produto&&produto!==''&&normalizeText(produto)!=='PRODUTO'){ const qtde=parseNumber(itemRow[3]); const valorUnitario=parseNumber(itemRow[4]); const valorBruto=parseNumber(itemRow[11])||(qtde*valorUnitario); if(qtde>0||valorBruto>0) items.push({produto:produto,codigo:itemRow[1]?String(itemRow[1]).trim():'',qtde:qtde,valor_bruto:valorBruto}); } i++; } if(items.length===0) continue; let totalBrutoItems=items.reduce((s,it)=>s+it.valor_bruto,0); /* CORREÇÃO — rateio de desconto/acréscimo proporcional:
-   Antes: usava o desconto explícito da NF e só tratava desconto implícito (itens > NF).
-   Isso causava diferenças quando: (a) NF total > soma itens (frete/seguro) ou
-   (b) o desconto explícito não coincidia exatamente com a diferença real.
-   Agora: calcula ajuste real (brutoItens - totalNota) para garantir que a soma
-   dos valor_liquido dos itens = exatamente o total da NF, com rateio proporcional. */
-let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let restante=descontoEfetivo; items.forEach((item,idx)=>{ let rateio=0; if(descontoEfetivo!==0&&totalBrutoItems>0){ if(idx===items.length-1) rateio=restante; else{ rateio=round2((item.valor_bruto/totalBrutoItems)*descontoEfetivo); rateio=descontoEfetivo>0?Math.min(rateio,restante):Math.max(rateio,restante); restante=round2(restante-rateio); } } const valorLiquido=round2(item.valor_bruto-rateio); if(valorLiquido<0) return; const dataObj=dataObjNota; const competencia=competenciaFromDate(dataObj); results.push({dataOriginal:dataObj?formatDateBr(dataObj):'',competencia:competencia,fornecedor_completo:fornecedor,fornecedor_primeiro:primeiroNome(fornecedor),cliente:cliente,linha_atuacao:inferLinhaAtuacao(item.produto,item.codigo),produto:item.produto,qtde:item.qtde,valor_bruto:item.valor_bruto,desconto_rateado:rateio,valor_liquido:valorLiquido,nf:nf}); }); } else i++; } return results; }
+    /* ======================================================================
+       CLASSIFICAÇÃO DE LINHA — REFERENCIAL: ABA "Linhas" × ABA "Insumos"
+       ----------------------------------------------------------------------
+       A aba "Linhas" é um catálogo PRODUTO (nome padronizado) → LINHA.
+       A aba "Insumos" traz a descrição comercial crua de cada item da NF-e
+       (com lote, validade, apresentação, marca etc.). O casamento é feito
+       em 3 camadas, sempre devolvendo a LINHA definida na aba "Linhas":
+         1) nome exato (normalizado)          → origem "exato"
+         2) nome-base sem lote/validade/ref.  → origem "base"
+         3) similaridade ponderada de termos  → origem "similaridade"
+            (dicionário de sinônimos/abreviações comerciais + IDF do catálogo)
+       Itens sem correspondência confiável ficam como "Não classificado"
+       e são listados no painel de conciliação, para inclusão na aba Linhas.
+       ====================================================================== */
+    const LINHA_NAO_CLASSIFICADA = 'Não classificado';
+    const LINHA_DF_ESPECIFICO = 6;          // termo presente em até 6 produtos do catálogo = específico
+    const LINHA_SIM_LIMIAR = 0.42;           // Dice ponderado mínimo p/ aceitar o produto mais parecido
+    const LINHA_STOP = new Set(['DE','DA','DO','DAS','DOS','E','A','O','P','PARA','PRA','COM','C','SEM','S','EM','NO','NA','X','ML','L','UL','µL','MM','CM','G','MG','UN','UND','UNID','UNIDADE','UNIDADES','CX','PCT','PT','KIT','FR','TESTES','TESTE','T','LOTE','LT','VAL','VL','VALIDADE','REF','COD','DESCRICAO','GENERICA','USO','TIPO','COMP','COMPL','COMPLETO','CONJ','CONJUNTO','APRESE','APRE','APRESENTACAO','AUTO','AUTOMACAO','ANALISE','ANAL','ANALI','QUANT','DIAG','DIAGNOSTICO','CLIN','CLINICO','METO','MET','LABMEDIC','CONTRATO','VIDA','UNIVERSAL','MARCA','BM','SERIES','DC2','ORIG','PADR','PLASTICO','PLAST','RACK','UNDS','NIVEIS','NIVEL']);
+    // Termos que NÃO devem ser descartados mesmo sendo curtos/genéricos (distinguem produtos)
+    const LINHA_KEEP_SHORT = new Set(['D','H','N','P','I','II','V','TP','CA','CK','MB','GT','HDL','ISE','LS','QC','K3','N1','N2','FR','ASO','PCR','BNP','HCG','CCS','ABL5','VCA','CP','AB','AVL','NAC','PH','FIA','HPLC','HBA1C','3CF','3DH','5DIFF','CL','R1','R2','LH','MD']);
+    // Sinônimos/abreviações comerciais (aplicados por expressão regular sobre o texto normalizado)
+    const LINHA_SINONIMOS = [
+        [/\bALT\s+\d[\d,.]*|\bDIAM\s+\d[\d,.]*/g, ' '],                       // "ALT. 29,8 - DIAM. 9,95" = dimensões da cubeta
+        [/\bCOMP(?:ONENTES?)?\s+(?:DE\s+)?AMOSTRAS?\b|\bCOMPONENTES?\b/g, ' '],
+        [/\bREAGENTE(?=[A-Z])/g, 'REAGENTE '], [/\bREAG\b/g, ' REAGENTE '],
+        [/\bPROTEINA\s+NA\s+URINA\b|\bURINARIA\b/g, ' PROTEINA URINARIA '],
+        [/\bTOTAIS\b/g, ' TOTAL '],
+        [/\bPEPTIDEO\s+NATRIURETICO\b/g, ' BNP '],
+        [/\bIMUN\b|\bIMUNOENSAIO\b|\bIMUNOFLUORESC[A-Z]*\b/g, ' FIA '],
+        [/\bSORO\s+PLASMA\s+URINA\b|\bWB\s+S\s+P\b|\bST\s+S\s+P\b/g, ' '],
+        [/\bDESPROTEINIZ[A-Z]*\b/g, ' DESPROTEINIZANTE '],
+        [/\bHEP\b/g, ' HEPARINA '], [/\bLIT\b/g, ' LITICA '],
+        [/\bCONDITIONER\b/g, ' CONDICIONADORA '], [/\bCLEANER\b/g, ' CLEANER LIMPEZA '],
+        [/\bB(?:ETA)?[\s\-]?HCG\b|Β[\s\-]?HCG/g, ' BETA HCG '],
+        [/\bNT[\s\-]?PRO[\s\-]?BNP\b|\bPRO[\s\-]?BNP\b|\bPROBNP\b/g, ' NTPROBNP '],
+        [/\bCK[\s\-]?NAC\b|\bCKNAC\b/g, ' CK TOTAL NAC '],
+        [/\bCK[\s\-]?MB\b|\bCKMB\b/g, ' CK MB '],
+        [/\bCTNI\b/g, ' TROPONINA I '],
+        [/\bMYO\b|\bMIO\b/g, ' MIOGLOBINA '],
+        [/\bPCRU\b/g, ' PCR ULTRASSENSIVEL '],
+        [/\bPCT\b(?!\s+(?:C\s+|COM\s+)?\d)/g, ' PROCALCITONINA '],
+        [/\bTGP\b/g, ' ALT '], [/\bTGO\b/g, ' AST '],
+        [/\bGGT\b/g, ' GAMA GT '],
+        [/\bBILI\s+T\b/g, ' BILIRRUBINA TOTAL '], [/\bBILI\s+D\b/g, ' BILIRRUBINA DIRETA '],
+        [/\bBILIR?\b/g, ' BILIRRUBINA '],
+        [/\bPTT\b|\bTTPA\b|\bTROMBOPLASTINA\b|\bTROBOPLASTICA\b/g, ' TTPA '],
+        [/\bPROTROMBINA\b/g, ' TP '],
+        [/\bDIMERO\b/g, ' DIMERO '],
+        [/\bAPP?OTT?I\b|\bCELER\b|\bFINECARE\b|\bFIN\b|\bVIDAFIATESTE\b|\bCASSETE\b|\bDETERMI?N?A?N?CAO\b|\bDETERMIANCAO\b/g, ' FIA '],
+        [/\bQUANTITATI[CV]A\b|\bQUANTI\b/g, ' QUANTITATIVA '],
+        [/\bRAPID\b|\bRAPIDO\b/g, ' RAPIDO '],
+        [/\bHBA1C\b|\bA1C\b|\bGLICADA\b|\bGLICO\b/g, ' HBA1C '],
+        [/\bH9\b|\bCROMATOGRAFIA\b/g, ' HPLC '],
+        [/\bSMA?R?TLYTE\b/g, ' SMARTLYTE '],
+        [/\bQC\b/g, ' CONTROLE QUALIDADE '],
+        [/\bCONTROLES\b|\bCONTRO\b|\bCONT\b|\bCONTR\b/g, ' CONTROLE '],
+        [/\bQUAL\b/g, ' QUALIDADE '],
+        [/\bELECTRODE\b|\bELETRODOS?\b/g, ' ELETRODO '],
+        [/\bELECT\b|\bELECTROLYTE\b/g, ' ELECTROLYTE '],
+        [/\bSOLUTION\b|\bSOLU\b|\bSOLUC\b|\bSOL\b/g, ' SOLUCAO '],
+        [/\bLIMP\b/g, ' LIMPEZA '],
+        [/\bCONDICI?O?N?A?M?E?N?T?O?\b|\bCONDICIONADOR[A]?\b|\bCONDIC\b|\bCONDICI\b/g, ' CONDICIONADORA '],
+        [/\bCALIBRAD[A-Z]*\b|\bCALIBR\b/g, ' CALIBRADOR '],
+        [/\bHEPA\b|\bHEPARINA\b/g, ' HEPARINA '],
+        [/\bGASO\b|\bGASES\b|\bGASOMETRICA\b/g, ' GASOMETRIA '],
+        [/\bVACUTUBE\b/g, ' TUBO VACUO '],
+        [/\bMINI\s+TUBO\b|\bVACUO\s+MICRO\b/g, ' MICROTUBO '],
+        [/\bBOB\b/g, ' BOBINA PAPEL '], [/\bTERMOSSENSIVEL\b/g, ' TERMICO '],
+        [/\bUROANALISE\b|\bURIVIDA\b|\bURINA\b/g, ' URINALISE '],
+        [/\bBLOOD\s+CULTURA\b|\bGARRAFA\b|\bHEMOCULTURAS?\b/g, ' FRASCO HEMOCULTURA '],
+        [/\bANAEROB[A-Z]*\b/g, ' ANAEROBIO '], [/\bAEROB[A-Z]*\b/g, ' AEROBIO '],
+        [/\bPEDIATRIC[A-Z]*\b/g, ' PEDIATRICO '],
+        [/\bAVL\s*9\d\w*\b/g, ' AVL '],
+        [/\bPAK\b/g, ' PACK '], [/\bPACOTE\b/g, ' PACK '],
+        [/\bHALOG[A-Z]*\b/g, ' HALOGENA '],
+        [/\bDESPRO\b/g, ' DESPRO '],
+        [/\bCUBETAS\b/g, ' CUBETA '],
+        [/\bCOAGULOMETRO\b|\bCOAG\b/g, ' COAG '],
+        [/\bVETERINARI[OA]\b|\bVET\b|\bCANIN[OA]\b/g, ' VETERINARIO ']
+    ];
+    // Sufixos de lote/validade/referência que encerram a "parte descritiva" do nome
+    const LINHA_CORTE_BASE = /\s*(?:[#*]|\bLOTES?\b|\bLT\s*[:.]?\s*\w|\bLT\d|\bVAL\b|\bVALIDADE\b|\bVL\s*\d|\bVL\b|\bFAB\b|\bREF\s*[:.])/;
+    const linhaNomeBase = s => normalizeText(s).split(LINHA_CORTE_BASE)[0].replace(/[\s\-–:,;.]+$/,'').trim();
+    const LINHA_CANON = { 'BIOQUIMICA':'Bioquímica','GASOMETRIA':'Gasometria','HEMATOLOGIA':'Hematologia','IMUNOLOGIA':'Imunologia','COAGULACAO':'Coagulação','ELETROLISE':'Eletrólise','ELTROLISE':'Eletrólise','ELETROLITOS':'Eletrólise','HEMOGLOBINA':'Hemoglobina','HEMOCULTURA':'Hemocultura','CONSUMIVEIS':'Consumíveis','URINALISE':'Urinálise','MICROBIOLOGIA':'Microbiologia','VETERINARIA':'Veterinária','EQUIPAMENTO':'Equipamento','EQUIPAMENTOS':'Equipamento' };
+    const canonLinha = l => { const k = normalizeText(l); if (!k) return ''; return LINHA_CANON[k] || String(l).trim().replace(/\s+/g,' '); };
+    // Radical simples: plural e vogal temática final (BIOQUIMICA/BIOQUIMICO → BIOQUIMIC; DIRETA/DIRETO → DIRET)
+    const linhaStem = tok => {
+        if (tok.length > 3 && tok.endsWith('S') && !/(SS|US|IS)$/.test(tok)) tok = tok.slice(0, -1);
+        if (tok.length > 5 && /[AOE]$/.test(tok)) tok = tok.slice(0, -1);
+        return tok;
+    };
+    function linhaTokens(texto, comParenteses) {
+        // Retorna Map token → peso-base (termos entre parênteses valem metade no catálogo)
+        let t = normalizeText(String(texto ?? '').replace(/[βΒ]/g,' BETA '));
+        const out = new Map();
+        const addAll = (str, w) => {
+            let s = ' ' + str.replace(/[\/\\|+(),\[\]{}"'`´:;=]/g,' ').replace(/[.\-–_](?=\D)|(?<=\D)[.\-–_]/g,' ') + ' ';
+            LINHA_SINONIMOS.forEach(([re, rep]) => { s = s.replace(re, rep); });
+            s.split(/\s+/).forEach(tok => {
+                tok = tok.replace(/^[.\-]+|[.\-]+$/g,'');
+                if (!tok) return;
+                if (/^[\d.,xX\-]+$/.test(tok)) return;                 // números/apresentações
+                if (/^\d+(ML|L|G|MG|UL|T|UN|UND|MM|W|V)$/.test(tok)) return; // 100ML, 25T, 20W…
+                if (LINHA_STOP.has(tok)) return;
+                if (tok.length < 3 && !LINHA_KEEP_SHORT.has(tok)) return;
+                tok = linhaStem(tok);
+                if (!out.has(tok) || out.get(tok) < w) out.set(tok, w);
+            });
+        };
+        if (comParenteses) {
+            const dentro = (t.match(/\(([^)]*)\)/g) || []).join(' ');
+            addAll(t.replace(/\([^)]*\)/g,' '), 1);
+            addAll(dentro, 0.5);
+        } else addAll(t, 1);
+        return out;
+    }
+    const linhaTokEq = (a, b) => a === b || (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a)));
+    let LINHAS_REF = null; // { exato:Map, base:Map, produtos:[{nome,linha,toks,peso}], idf:Map, vocab:Set, total }
+    function buildLinhasReference(wb) {
+        const nomeAba = wb.SheetNames.find(n => normalizeText(n) === 'LINHAS');
+        if (!nomeAba) return null;
+        const m = XLSX.utils.sheet_to_json(wb.Sheets[nomeAba], { header: 1, defval: '', raw: true });
+        if (!m.length) return null;
+        // Cabeçalho flexível: localiza colunas LINHA e PRODUTO na primeira linha que as contenha
+        let hi = m.findIndex(r => r && r.some(c => normalizeText(c) === 'LINHA') && r.some(c => normalizeText(c) === 'PRODUTO'));
+        if (hi < 0) return null;
+        const cL = m[hi].findIndex(c => normalizeText(c) === 'LINHA'), cP = m[hi].findIndex(c => normalizeText(c) === 'PRODUTO');
+        const votos = new Map(); // produto normalizado → Map(linha → contagem)
+        const nomes = new Map();
+        let linhasLidas = 0;
+        for (let i = hi + 1; i < m.length; i++) {
+            const r = m[i]; if (!r) continue;
+            const prod = String(r[cP] ?? '').trim(), lin = canonLinha(r[cL]);
+            if (!prod || !lin) continue;
+            linhasLidas++;
+            const k = normalizeText(prod);
+            if (!votos.has(k)) { votos.set(k, new Map()); nomes.set(k, prod); }
+            const v = votos.get(k); v.set(lin, (v.get(lin) || 0) + 1);
+        }
+        const linhaDe = k => [...votos.get(k).entries()].sort((a,b) => b[1]-a[1])[0][0];
+        const exato = new Map(), base = new Map(), produtos = [];
+        votos.forEach((_, k) => {
+            const lin = linhaDe(k);
+            exato.set(k, { produto: nomes.get(k), linha: lin });
+            const b = linhaNomeBase(nomes.get(k)); if (b && !base.has(b)) base.set(b, { produto: nomes.get(k), linha: lin });
+            produtos.push({ nome: nomes.get(k), linha: lin, toks: linhaTokens(nomes.get(k), true) });
+        });
+        // IDF por termo sobre o catálogo de produtos
+        const df = new Map();
+        produtos.forEach(p => p.toks.forEach((_, t) => df.set(t, (df.get(t) || 0) + 1)));
+        const N = produtos.length, idf = new Map();
+        df.forEach((n, t) => idf.set(t, Math.log(1 + N / n)));
+        produtos.forEach(p => { p.peso = 0; p.toks.forEach((w, t) => p.peso += w * idf.get(t)); });
+        const linhasDoTermo = new Map();
+        produtos.forEach(p => p.toks.forEach((_, t) => { if (!linhasDoTermo.has(t)) linhasDoTermo.set(t, new Set()); linhasDoTermo.get(t).add(p.linha); }));
+        return { exato, base, produtos, idf, df, linhasDoTermo, vocab: new Set(df.keys()), total: N, linhasLidas, cache: new Map() };
+    }
+    function classifyByLinhas(produtoCru) {
+        const ref = LINHAS_REF;
+        if (!ref) return { linha: LINHA_NAO_CLASSIFICADA, origem: 'sem-aba', produtoRef: '', score: 0 };
+        const k = normalizeText(produtoCru);
+        if (ref.cache.has(k)) return ref.cache.get(k);
+        let res = null;
+        if (ref.exato.has(k)) { const e = ref.exato.get(k); res = { linha: e.linha, origem: 'exato', produtoRef: e.produto, score: 1 }; }
+        if (!res) { const b = linhaNomeBase(produtoCru); if (b && ref.base.has(b)) { const e = ref.base.get(b); res = { linha: e.linha, origem: 'base', produtoRef: e.produto, score: 1 }; } }
+        if (!res) {
+            // Termos do item cru (apenas parte descritiva, sem lote/validade) que existem no vocabulário do catálogo
+            const crus = linhaTokens(linhaNomeBase(produtoCru) || produtoCru, false);
+            const vocab = [...ref.vocab];
+            const tr = new Map(); // token do catálogo → peso idf
+            crus.forEach((_, t) => {
+                const fator = t.length === 1 ? 0.5 : 1; // letras isoladas (D, H, N, P…) pesam menos no item cru
+                if (ref.vocab.has(t)) { tr.set(t, ref.idf.get(t) * fator); return; }
+                const alt = vocab.find(v => linhaTokEq(v, t));
+                if (alt && !tr.has(alt)) tr.set(alt, ref.idf.get(alt) * fator);
+            });
+            let pesoR = 0; tr.forEach(w => pesoR += w);
+            let best = null, second = null;
+            if (pesoR > 0) ref.produtos.forEach(p => {
+                let inter = 0;
+                p.toks.forEach((w, t) => { if (tr.has(t)) inter += w * ref.idf.get(t); });
+                if (inter <= 0) return;
+                // exige ao menos 1 termo ESPECÍFICO em comum (não basta "REAGENTE", "CONTROLE", "SOLUÇÃO"…)
+                let especifico = false;
+                p.toks.forEach((w, t) => { if (tr.has(t) && ref.df.get(t) <= LINHA_DF_ESPECIFICO) especifico = true; });
+                if (!especifico) return;
+                const dice = 2 * inter / (p.peso + pesoR);
+                const cand = { p, dice, inter };
+                if (!best || dice > best.dice + 1e-9 || (Math.abs(dice - best.dice) < 1e-9 && inter > best.inter)) { second = best; best = cand; }
+                else if (!second || dice > second.dice) second = cand;
+            });
+            if (best && best.dice >= LINHA_SIM_LIMIAR) res = { linha: best.p.linha, origem: 'similaridade', produtoRef: best.p.nome, score: Math.round(best.dice * 1000) / 1000 };
+            if (!res) {
+                // 4ª camada — termo exclusivo de uma única Linha no catálogo (ex.: LISANTE só existe em Hematologia)
+                const porLinha = new Map();
+                tr.forEach((w, t) => { const ls = ref.linhasDoTermo.get(t); if (ls && ls.size === 1) { const l = [...ls][0]; porLinha.set(l, (porLinha.get(l) || 0) + w); } });
+                const ord = [...porLinha.entries()].sort((a, b) => b[1] - a[1]);
+                if (ord.length && ord[0][1] >= 2.5 && (ord.length === 1 || ord[0][1] >= 2 * ord[1][1]))
+                    res = { linha: ord[0][0], origem: 'termo', produtoRef: best ? best.p.nome : '', score: best ? Math.round(best.dice * 1000) / 1000 : 0 };
+            }
+            if (!res) res = { linha: LINHA_NAO_CLASSIFICADA, origem: 'nao-classificado', produtoRef: best ? best.p.nome : '', score: best ? Math.round(best.dice * 1000) / 1000 : 0 };
+        }
+        ref.cache.set(k, res);
+        return res;
+    }
+
+    /* ======================================================================
+       EXTRAÇÃO DA ABA "Insumos" — revisão de auditoria
+       ----------------------------------------------------------------------
+       Correções em relação à versão anterior:
+       (a) Cabeçalho de NF deslocado: há NF-e cujo número está numa coluna à
+           esquerda de "Cliente" que não é a coluna "NF-e" (ex.: NF 14377, número
+           gravado na coluna N). Antes a linha não era reconhecida como NF: seus
+           itens eram somados à NF anterior e "espremidos" ao total dela.
+           Agora o número é procurado em qualquer coluna antes de "Cliente".
+       (b) Colunas dos itens (Produto, Código, Qtde., Valor Unitário, Valor Total)
+           passam a ser lidas pelo subcabeçalho "Produto" de cada NF, com as
+           posições antigas apenas como reserva.
+       (c) NF-e sem itens detalhados não são mais descartadas em silêncio: entram
+           como lançamento único "Não classificado", para que o total apropriado
+           continue conciliando com a soma de "Valor Total" das NF-e da aba.
+       (d) Nenhum item é descartado por valor líquido negativo após o rateio.
+       (e) A Linha de cada item vem da aba "Linhas" (classifyByLinhas).
+       ====================================================================== */
+    let IMPORT_AUDIT = null;
+    const ITEM_COL_PADRAO = { produto: 0, codigo: 1, qtde: 3, unit: 4, total: 11 };
+    function mapItemColumns(subHeader) {
+        const c = { ...ITEM_COL_PADRAO };
+        if (!subHeader) return c;
+        subHeader.forEach((v, j) => {
+            const t = normalizeText(v).replace(/\.$/, '');
+            if (t === 'PRODUTO') c.produto = j; else if (t === 'CODIGO') c.codigo = j;
+            else if (t === 'QTDE' || t === 'QUANTIDADE') c.qtde = j;
+            else if (t === 'VALOR UNITARIO') c.unit = j; else if (t === 'VALOR TOTAL') c.total = j;
+        });
+        return c;
+    }
+    const isBlankRow = row => !row || row.every(cell => cell === null || cell === undefined || (typeof cell === 'string' && cell.trim() === ''));
+    // Devolve o número da NF-e se a linha for um cabeçalho de nota; senão null.
+    function detectNFHeader(row, col) {
+        if (!row) return null;
+        const cli = col.cliente !== undefined ? row[col.cliente] : row[col.razao];
+        if (!cli || !String(cli).trim()) return null;
+        const v = row[col.nf];
+        if (v !== undefined && v !== null && v !== '' && isValidNFNumber(v)) return String(v).trim();
+        // Reserva: número da NF gravado em outra coluna à esquerda de "Cliente" (linha deslocada)
+        const limite = Math.min(col.cliente ?? col.razao, row.length);
+        const temTotal = col.total !== undefined && row[col.total] !== '' && row[col.total] !== null && !isNaN(parseNumber(row[col.total]));
+        if (!temTotal) return null;
+        for (let j = 0; j < limite; j++) {
+            if (j === col.nf) continue;
+            const x = row[j];
+            if (x !== '' && x !== null && x !== undefined && isValidNFNumber(x)) return String(x).trim();
+        }
+        return null;
+    }
+    function parseInvoiceWorksheet(matrix) {
+        const headerIdx = findHeaderRowIndex(matrix);
+        if (headerIdx === -1) return [];
+        const col = mapColumnsFromHeader(matrix[headerIdx]);
+        if (col.nf === undefined || (col.cliente === undefined && col.razao === undefined)) return [];
+        const audit = { nfs: 0, nfsSemItens: [], nfsDeslocadas: [], somaTotalNF: 0, somaBrutoItens: 0, ajusteNF: 0, canceladas: 0 };
+        const results = [];
+        let i = headerIdx + 1;
+        while (i < matrix.length) {
+            const row = matrix[i];
+            if (isBlankRow(row)) { i++; continue; }
+            const nf = detectNFHeader(row, col);
+            if (!nf) { i++; continue; }
+            // ---- Cabeçalho da NF-e ----
+            const fornecedor = (col.razao !== undefined && row[col.razao]) ? String(row[col.razao]).trim() : String(row[col.cliente] || '').trim();
+            const cliente = (col.cliente !== undefined && row[col.cliente]) ? String(row[col.cliente]).trim() : fornecedor;
+            const desconto = parseNumber(row[col.desconto]);
+            const totalNota = parseNumber(row[col.total]);
+            const situacao = col.situacao !== undefined ? normalizeText(row[col.situacao] || '') : '';
+            const dataRaw = (col.dataSaida !== undefined && row[col.dataSaida]) ? row[col.dataSaida] : (col.dataEmissao !== undefined ? row[col.dataEmissao] : null);
+            const dataObjNota = parseDateValue(dataRaw) || findPlausibleDateInRow(row);
+            if (String(row[col.nf] ?? '').trim() !== nf) audit.nfsDeslocadas.push({ nf, cliente, linhaPlanilha: i + 1, total: totalNota });
+            const cancelada = situacao === 'CANCELADO' || situacao === 'DENEGADO' || situacao === 'REJEITADO';
+            // ---- Itens da NF-e (até o próximo cabeçalho de NF) ----
+            let itemCol = { ...ITEM_COL_PADRAO };
+            const items = [];
+            i++;
+            while (i < matrix.length) {
+                const r = matrix[i];
+                if (isBlankRow(r)) { i++; continue; }
+                if (detectNFHeader(r, col)) break;
+                const p0 = normalizeText(r[itemCol.produto] ?? r[0]);
+                if (normalizeText(r[0]) === 'PRODUTO') { itemCol = mapItemColumns(r); i++; continue; }
+                if (isTotalLine(r, col)) { i++; continue; }
+                const produto = r[itemCol.produto] !== undefined && r[itemCol.produto] !== null ? String(r[itemCol.produto]).trim() : '';
+                if (produto && p0 !== 'PRODUTO') {
+                    const qtde = parseNumber(r[itemCol.qtde]);
+                    const valorUnitario = parseNumber(r[itemCol.unit]);
+                    const valorBruto = parseNumber(r[itemCol.total]) || round2(qtde * valorUnitario);
+                    if (qtde > 0 || valorBruto > 0) items.push({ produto, codigo: r[itemCol.codigo] !== undefined && r[itemCol.codigo] !== null ? String(r[itemCol.codigo]).trim() : '', qtde, valor_bruto: valorBruto });
+                }
+                i++;
+            }
+            if (cancelada) { audit.canceladas++; continue; }
+            audit.nfs++;
+            audit.somaTotalNF = round2(audit.somaTotalNF + totalNota);
+            const dataObj = dataObjNota, competencia = competenciaFromDate(dataObj);
+            const base = { dataOriginal: dataObj ? formatDateBr(dataObj) : '', competencia, fornecedor_completo: fornecedor, fornecedor_primeiro: primeiroNome(fornecedor), cliente, nf };
+            if (items.length === 0) {
+                // NF-e sem detalhamento de itens: não há como atribuir Linha → "Não classificado"
+                audit.nfsSemItens.push({ nf, cliente, total: totalNota, data: base.dataOriginal });
+                if (totalNota !== 0) results.push({ ...base, linha_atuacao: LINHA_NAO_CLASSIFICADA, linha_origem: 'nf-sem-itens', linha_produto_ref: '', linha_score: 0, produto: `(NF-e ${nf} sem itens detalhados na aba Insumos)`, qtde: 0, valor_bruto: 0, desconto_rateado: -totalNota, valor_liquido: round2(totalNota) });
+                continue;
+            }
+            const totalBrutoItems = round2(items.reduce((s, it) => s + it.valor_bruto, 0));
+            audit.somaBrutoItens = round2(audit.somaBrutoItens + totalBrutoItems);
+            /* Rateio proporcional da diferença (itens − total da NF): desconto da NF,
+               frete/IPI/ST ou arredondamento — a soma dos valores líquidos dos itens
+               fica exatamente igual ao "Valor Total" da NF-e. */
+            const descontoEfetivo = totalNota > 0 ? round2(totalBrutoItems - totalNota) : desconto;
+            audit.ajusteNF = round2(audit.ajusteNF + descontoEfetivo);
+            let restante = descontoEfetivo;
+            items.forEach((item, idx) => {
+                let rateio = 0;
+                if (descontoEfetivo !== 0 && totalBrutoItems > 0) {
+                    if (idx === items.length - 1) rateio = restante;
+                    else { rateio = round2((item.valor_bruto / totalBrutoItems) * descontoEfetivo); restante = round2(restante - rateio); }
+                }
+                const cls = LINHAS_REF ? classifyByLinhas(item.produto) : { linha: inferLinhaAtuacao(item.produto, item.codigo), origem: 'palavra-chave (sem aba Linhas)', produtoRef: '', score: 0 };
+                results.push({ ...base, linha_atuacao: cls.linha, linha_origem: cls.origem, linha_produto_ref: cls.produtoRef, linha_score: cls.score, produto: item.produto, codigo: item.codigo, qtde: item.qtde, valor_bruto: item.valor_bruto, desconto_rateado: rateio, valor_liquido: round2(item.valor_bruto - rateio) });
+            });
+        }
+        IMPORT_AUDIT = audit;
+        return results;
+    }
+
     function cleanInvalidRecords(rows){ return rows.filter(r=>{ let f=r.fornecedor_completo||'', c=r.cliente||''; if(/(TOTAL|QUANTIDADE|SOMA|VALOR\s+TOTAL)/i.test(f)||/(TOTAL|QUANTIDADE|SOMA|VALOR\s+TOTAL)/i.test(c)) return false; if(/^\d{4,}$/.test(f.trim())||/^\d{4,}$/.test(c.trim())) return false; return true; }); }
     function extractNormalizedRows(ws){ let matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true}); if(!matrix.length) return []; return parseInvoiceWorksheet(matrix); }
     function updateProgress(p, text) {
@@ -660,6 +1004,10 @@ let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let 
                 // errada (ex.: "Despesas") em vez da aba "Insumos". Agora busca-se
                 // explicitamente a aba "Insumos" pelo nome.
                 let sheetName = wb.SheetNames.find(n => normalizeText(n) === 'INSUMOS') || wb.SheetNames.find(n => /dados abertos/i.test(n)) || wb.SheetNames[0];
+                // REVISÃO: a Linha de cada item passa a ser apropriada pelo catálogo da aba "Linhas"
+                // (PRODUTO → LINHA) do MESMO arquivo, lido a cada importação (dinâmico).
+                LINHAS_REF = buildLinhasReference(wb);
+                IMPORT_AUDIT = null;
                 let ws = wb.Sheets[sheetName];
 
                 // Conta linhas da matriz para usar no contador
@@ -746,6 +1094,7 @@ let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let 
                 if (pillsBar) pillsBar.style.display = insFiltersOpen ? 'none' : 'flex';
             });
         }
+        renderImportAudit(originalData);
         applyFiltersAndRender();
     }
     function populateFilters(){
@@ -828,6 +1177,64 @@ let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let 
     function renderKPIs(kpis){ document.getElementById('kpiContainer').innerHTML = `<div class="kpi-card revenue"><div class="kpi-title"><i class="fas fa-circle-dollar-to-slot"></i> Faturamento Líquido</div><div class="kpi-value">${formatMoney(kpis.totalValor)}</div></div><div class="kpi-card volume"><div class="kpi-title"><i class="fas fa-boxes-stacked"></i> Volume Itens</div><div class="kpi-value">${kpis.totalItens.toLocaleString('pt-BR')}</div></div><div class="kpi-card clients"><div class="kpi-title"><i class="fas fa-hospital"></i> Clientes Ativos</div><div class="kpi-value">${kpis.uniqueClientes}</div></div><div class="kpi-card nfs"><div class="kpi-title"><i class="fas fa-industry"></i> Fornecedores</div><div class="kpi-value">${kpis.uniqueFornecedores}</div></div>`; }
     function renderResumoLinhas(data){ let map=new Map(); data.forEach(i=>{ let v=map.get(i.linha_atuacao)||{qtde:0,valor:0}; v.qtde+=i.qtde; v.valor+=i.valor_liquido; map.set(i.linha_atuacao,v); }); let container=document.getElementById('linhasGrid'); let section = document.getElementById('resumoLinhasSection'); if(!map.size){ section.style.display='none'; return; } section.style.display='block'; container.innerHTML=Array.from(map.entries()).sort((a,b)=>b[1].valor-a[1].valor).map(([linha,val])=>`<div class="linha-card"><div class="linha-nome">${escapeHtml(linha)}</div><div class="linha-stats"><span>📦 ${val.qtde.toLocaleString('pt-BR')} und</span><span>💰 ${formatMoney(val.valor)}</span></div></div>`).join(''); }
     let clientesCollapsed = true;
+    /* ==================== CONCILIAÇÃO INSUMOS × LINHAS (auditoria da importação) ==================== */
+    const LINHA_ORIGEM_LABEL = {
+        'exato': 'Nome idêntico ao da aba Linhas',
+        'base': 'Mesmo produto da aba Linhas (sem lote/validade)',
+        'similaridade': 'Correspondência com produto da aba Linhas',
+        'termo': 'Termo exclusivo de uma Linha da aba Linhas',
+        'nf-sem-itens': 'NF-e sem itens detalhados',
+        'nao-classificado': 'Sem correspondência na aba Linhas',
+        'palavra-chave (sem aba Linhas)': 'Palavras-chave (aba Linhas ausente)'
+    };
+    let auditCollapsed = true;
+    function renderImportAudit(rows) {
+        const sec = document.getElementById('auditSection'); if (!sec) return;
+        const a = IMPORT_AUDIT || {};
+        const totalApropriado = round2(rows.reduce((s, r) => s + r.valor_liquido, 0));
+        const totalNF = round2(a.somaTotalNF || 0);
+        const dif = round2(totalApropriado - totalNF);
+        const naoClass = round2(rows.filter(r => r.linha_atuacao === LINHA_NAO_CLASSIFICADA).reduce((s, r) => s + r.valor_liquido, 0));
+        const pctClass = totalApropriado ? (1 - naoClass / totalApropriado) * 100 : 0;
+        const ok = Math.abs(dif) < 0.01;
+        document.getElementById('auditBadge').innerHTML = LINHAS_REF
+            ? `<span class="audit-pill ${ok ? 'ok' : 'warn'}">${ok ? '✔ Conciliado com as NF-e' : '⚠ Diferença ' + formatMoney(dif)}</span><span class="audit-pill ${pctClass >= 99.9 ? 'ok' : 'warn'}">${pctClass.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}% apropriado a Linhas</span>`
+            : `<span class="audit-pill warn">⚠ Aba "Linhas" não encontrada — classificação por palavras-chave</span>`;
+        // Origem da classificação
+        const porOrigem = new Map();
+        rows.forEach(r => { const k = r.linha_origem || '—'; const v = porOrigem.get(k) || { n: 0, v: 0 }; v.n++; v.v += r.valor_liquido; porOrigem.set(k, v); });
+        const origemRows = [...porOrigem.entries()].sort((x, y) => y[1].v - x[1].v).map(([k, v]) => `<tr><td>${escapeHtml(LINHA_ORIGEM_LABEL[k] || k)}</td><td style="text-align:right">${v.n.toLocaleString('pt-BR')}</td><td style="text-align:right">${formatMoney(round2(v.v))}</td><td style="text-align:right">${totalApropriado ? (v.v / totalApropriado * 100).toFixed(2) : '0.00'}%</td></tr>`).join('');
+        // Correspondências a revisar (sem correspondência, termo exclusivo ou similaridade < 0,60), agrupadas por produto
+        const rev = new Map();
+        rows.forEach(r => {
+            const fraco = r.linha_origem === 'nao-classificado' || r.linha_origem === 'termo' || r.linha_origem === 'nf-sem-itens' || (r.linha_origem === 'similaridade' && r.linha_score < 0.6);
+            if (!fraco) return;
+            const k = r.linha_origem === 'nf-sem-itens' ? r.produto : linhaNomeBase(r.produto);
+            const v = rev.get(k) || { produto: k, ref: r.linha_produto_ref, linha: r.linha_atuacao, origem: r.linha_origem, score: r.linha_score, n: 0, v: 0 };
+            v.n++; v.v += r.valor_liquido; rev.set(k, v);
+        });
+        const revRows = [...rev.values()].sort((x, y) => y.v - x.v).slice(0, 60).map(x => `<tr><td>${escapeHtml(x.produto)}</td><td>${escapeHtml(x.ref || '—')}</td><td><span class="badge-light">${escapeHtml(x.linha)}</span></td><td>${escapeHtml(LINHA_ORIGEM_LABEL[x.origem] || x.origem)}${x.origem === 'similaridade' ? ' (' + x.score.toLocaleString('pt-BR') + ')' : ''}</td><td style="text-align:right">${x.n}</td><td style="text-align:right">${formatMoney(round2(x.v))}</td></tr>`).join('');
+        const alertas = [];
+        (a.nfsDeslocadas || []).forEach(d => alertas.push(`NF-e <b>${escapeHtml(d.nf)}</b> (${escapeHtml(d.cliente)}) está com o número fora da coluna "NF-e" na linha ${d.linhaPlanilha} da aba Insumos — foi reconhecida e seus itens apropriados a ela (${formatMoney(d.total)}).`));
+        (a.nfsSemItens || []).forEach(d => alertas.push(`NF-e <b>${escapeHtml(d.nf)}</b> (${escapeHtml(d.cliente)}, ${escapeHtml(d.data)}) não possui itens na aba Insumos — ${formatMoney(d.total)} lançados como "${LINHA_NAO_CLASSIFICADA}".`));
+        if (!LINHAS_REF) alertas.push('A aba "Linhas" não foi encontrada no arquivo. As Linhas foram inferidas por palavras-chave e podem divergir do catálogo oficial.');
+        document.getElementById('auditContent').innerHTML = `
+            <div class="audit-kpis">
+                <div><span>NF-e lidas (aba Insumos)</span><b>${(a.nfs || 0).toLocaleString('pt-BR')}</b></div>
+                <div><span>Σ Valor Total das NF-e</span><b>${formatMoney(totalNF)}</b></div>
+                <div><span>Σ apropriado às Linhas</span><b>${formatMoney(totalApropriado)}</b></div>
+                <div><span>Diferença</span><b style="color:${ok ? 'var(--accent-clients-text)' : '#c0392b'}">${formatMoney(dif)}</b></div>
+                <div><span>Produtos no catálogo (aba Linhas)</span><b>${LINHAS_REF ? LINHAS_REF.total.toLocaleString('pt-BR') : '—'}</b></div>
+            </div>
+            <p class="audit-note">Os itens de cada NF-e são valorados pelo "Valor Total" do item e ajustados proporcionalmente para que a soma feche com o "Valor Total" da NF-e (desconto, frete/IPI ou arredondamento — no conjunto, ${(a.ajusteNF || 0) >= 0 ? 'redução líquida' : 'acréscimo líquido'} de ${formatMoney(Math.abs(round2(a.ajusteNF || 0)))} sobre a soma bruta dos itens). A Linha de cada item é a da aba "Linhas" para o produto correspondente.</p>
+            ${alertas.length ? `<div class="audit-alerts">${alertas.map(x => `<div>⚠ ${x}</div>`).join('')}</div>` : ''}
+            <h4 class="audit-h4">Origem da classificação de Linha</h4>
+            <div class="table-wrapper"><table class="data-table audit-table"><thead><tr><th style="position:static">Origem</th><th style="position:static;text-align:right">Itens</th><th style="position:static;text-align:right">Valor líquido</th><th style="position:static;text-align:right">% do valor</th></tr></thead><tbody>${origemRows}</tbody></table></div>
+            <h4 class="audit-h4">Correspondências para conferência ${rev.size > 60 ? '(60 maiores de ' + rev.size + ')' : ''}</h4>
+            ${revRows ? `<div class="table-wrapper"><table class="data-table audit-table"><thead><tr><th style="position:static">Produto na NF-e (sem lote/validade)</th><th style="position:static">Produto de referência (aba Linhas)</th><th style="position:static">Linha</th><th style="position:static">Critério</th><th style="position:static;text-align:right">Itens</th><th style="position:static;text-align:right">Valor líquido</th></tr></thead><tbody>${revRows}</tbody></table></div><p class="audit-note">Para tornar qualquer uma dessas apropriações definitiva, inclua o nome do produto (como aparece na NF-e) na aba "Linhas", com a Linha desejada, e reimporte a planilha — o nome idêntico tem prioridade sobre as demais regras.</p>` : '<p class="audit-note">Nenhuma correspondência de baixa confiança.</p>'}`;
+        sec.style.display = 'block';
+        document.getElementById('auditCollapsibleContent').style.display = auditCollapsed ? 'none' : 'block';
+    }
     function renderResumoClientes(data){ let mapCliente = new Map(); data.forEach(row=>{ if(!mapCliente.has(row.cliente)) mapCliente.set(row.cliente,{valor:0,qtde:0}); let acc=mapCliente.get(row.cliente); acc.valor+=row.valor_liquido; acc.qtde+=row.qtde; }); let container=document.getElementById('clientesResumoGrid'); let section=document.getElementById('clientesResumoSection'); if(mapCliente.size===0 || !isAnyFilterActive()){ section.style.display='none'; return; } section.style.display='block'; let html=''; for(let [cliente,vals] of mapCliente.entries()){ html+=`<div class="cliente-resumo-card"><div class="cliente-nome">${escapeHtml(cliente)}</div><div>💰 ${formatMoney(vals.valor)} &nbsp;📦 ${vals.qtde.toLocaleString('pt-BR')} itens</div></div>`; } container.innerHTML=html; if(clientesCollapsed) document.getElementById('clientesCollapsibleContent').style.display = 'none'; else document.getElementById('clientesCollapsibleContent').style.display = 'block'; }
     let extratoCollapsed = true;
     function renderExtratoTable(data){ const tbody = document.getElementById('tableBody'); const emptyDiv = document.getElementById('tableEmpty'); if(!data.length){ tbody.innerHTML = ''; emptyDiv.style.display = 'block'; document.getElementById('extratoCollapsibleContent').style.display = 'none'; return; } emptyDiv.style.display = 'none'; let html = ''; let lastForn = null; data.forEach(r => { if (r.fornecedor_completo !== lastForn) { lastForn = r.fornecedor_completo; html += `<tr class="group-header-row"><td colspan="9">🏭 ${escapeHtml(r.fornecedor_completo)}</td></tr>`; } html += `<tr><td>${escapeHtml(r.dataOriginal||'—')}</td><td>${escapeHtml(r.nf||'—')}</td><td>${escapeHtml(r.competencia)}</td><td>${escapeHtml(r.fornecedor_completo)}</td><td>${escapeHtml(r.cliente)}</td><td><span class="badge-light">${escapeHtml(r.linha_atuacao)}</span></td><td>${escapeHtml(r.produto.substring(0,80))}</td><td>${r.qtde.toLocaleString('pt-BR')}</td><td>${formatMoney(r.valor_liquido)}</td></tr>`; }); tbody.innerHTML = html; if(extratoCollapsed) document.getElementById('extratoCollapsibleContent').style.display = 'none'; else document.getElementById('extratoCollapsibleContent').style.display = 'block'; }
@@ -852,7 +1259,7 @@ let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let 
         updateProgress(0, "Iniciando geração do Excel...");
         await new Promise(r => setTimeout(r, 100));
         const wb = XLSX.utils.book_new();
-        const detailData = filtered.map(r => ({ "Data": r.dataOriginal, "NF": r.nf, "Competência": r.competencia, "Fornecedor": r.fornecedor_completo, "Cliente": r.cliente, "Linha": r.linha_atuacao, "Produto": r.produto, "Qtd": r.qtde, "Valor Líquido": r.valor_liquido }));
+        const detailData = filtered.map(r => ({ "Data": r.dataOriginal, "NF": r.nf, "Competência": r.competencia, "Fornecedor": r.fornecedor_completo, "Cliente": r.cliente, "Linha": r.linha_atuacao, "Produto": r.produto, "Produto de referência (aba Linhas)": r.linha_produto_ref || '', "Critério da Linha": LINHA_ORIGEM_LABEL[r.linha_origem] || r.linha_origem || '', "Qtd": r.qtde, "Valor Bruto": r.valor_bruto, "Ajuste rateado da NF": r.desconto_rateado, "Valor Líquido": r.valor_liquido }));
         const detailSheet = XLSX.utils.json_to_sheet(detailData);
         XLSX.utils.book_append_sheet(wb, detailSheet, "Detalhes_Filtrados");
         const resumoLinhaFornec = new Map();
@@ -863,6 +1270,10 @@ let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let 
         resumoArray.push({ linha: "TOTAL GERAL", fornecedor: "", valor: totalValor, qtde: totalQtde });
         const resumoSheet = XLSX.utils.json_to_sheet(resumoArray);
         XLSX.utils.book_append_sheet(wb, resumoSheet, "Resumo_Linha_Fornecedor");
+        // Mapeamento produto (NF-e) → produto/Linha da aba "Linhas", para conferência e retroalimentação do catálogo
+        const mapa = new Map();
+        filtered.forEach(r => { const k = r.produto; const m = mapa.get(k) || { "Produto na NF-e": k, "Produto de referência (aba Linhas)": r.linha_produto_ref || '', "Linha": r.linha_atuacao, "Critério": LINHA_ORIGEM_LABEL[r.linha_origem] || r.linha_origem || '', "Similaridade": r.linha_score, "Itens": 0, "Valor Líquido": 0 }; m["Itens"]++; m["Valor Líquido"] = round2(m["Valor Líquido"] + r.valor_liquido); mapa.set(k, m); });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([...mapa.values()].sort((a, b) => b["Valor Líquido"] - a["Valor Líquido"])), "Mapeamento_Linhas");
         XLSX.writeFile(wb, `Labmedic_${new Date().toISOString().slice(0,10)}.xlsx`);
         updateProgress(1, "Concluído!");
         setTimeout(() => { document.getElementById('progressContainer').style.display = 'none'; }, 1500);
@@ -1163,6 +1574,7 @@ let descontoEfetivo=totalNota>0?round2(totalBrutoItems-totalNota):desconto; let 
     
     // Funções dos modais e análise (mantidas)
     document.getElementById('clientesResumoToggle').addEventListener('click', function() { clientesCollapsed = !clientesCollapsed; document.getElementById('clientesCollapsibleContent').style.display = clientesCollapsed ? 'none' : 'block'; document.getElementById('clientesToggleIcon').className = clientesCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
+    document.getElementById('auditToggle').addEventListener('click', function() { auditCollapsed = !auditCollapsed; document.getElementById('auditCollapsibleContent').style.display = auditCollapsed ? 'none' : 'block'; document.getElementById('auditToggleIcon').className = auditCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
     document.getElementById('extratoToggle').addEventListener('click', function() { extratoCollapsed = !extratoCollapsed; document.getElementById('extratoCollapsibleContent').style.display = extratoCollapsed ? 'none' : 'block'; document.getElementById('extratoToggleIcon').className = extratoCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
     
     function openAnalysisModal() { if(!dataLoaded) return; const data = getFilteredData(); if(!data.length) { alert("Sem dados com os filtros atuais."); return; } renderAnalysisPreview(data); document.getElementById('analysisModal').classList.add('active'); }
