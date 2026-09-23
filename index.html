@@ -313,6 +313,22 @@
         .analysis-kpi-card[style*="2c6e4f"] .analysis-kpi-value { color: var(--accent-alu-text); }
 
         /* ============================================================
+           Análise de Performance — cabeçalho distribuído (flex) e
+           distanciado dos cards; ranking em cards.
+           ============================================================ */
+        .analysis-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 20px; margin-bottom: 10px; }
+        .analysis-header h2 { margin: 0; }
+        .analysis-header-meta { flex: 1 1 auto; text-align: right; align-self: center; color: var(--text-muted); font-size: 0.75rem; }
+        .analysis-filters { flex: 1 1 100%; background: var(--card-bg-soft); border: 1px solid var(--border-color); border-radius: 14px; padding: 10px 14px; font-size: 0.75rem; line-height: 1.7; color: var(--text-primary); }
+        .analysis-kpi-grid { margin-top: 20px; }
+        .rank-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+        .rank-card { background: var(--card-bg-soft); border-radius: 16px; padding: 14px 16px; border-left: 5px solid #dd8c4a; break-inside: avoid; box-shadow: var(--shadow-subtle); }
+        .rank-card .rank-pos { display: inline-block; font-size: 0.68rem; font-weight: 800; background: var(--table-head-bg); color: #fff; border-radius: 20px; padding: 2px 10px; margin-bottom: 8px; }
+        .rank-card .rank-nome { font-weight: 700; font-size: 0.9rem; color: var(--text-strong); margin-bottom: 8px; }
+        .rank-card .rank-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+        .rank-card .rank-stats span { font-size: 0.72rem; font-weight: 800; color: var(--text-primary); background: var(--card-bg); border-radius: 8px; padding: 3px 8px; border: 1px solid var(--border-color); }
+
+        /* ============================================================
            Overrides para elementos com inline-styles gerados pelo JS
            (não podemos editar o JS; usamos seletores para corrigir
             contraste e cores codificadas inline).
@@ -1472,13 +1488,33 @@
         const monthlyChartImg = await captureCanvasAsImage('monthlyChart');
         const kpis = computeKPIs(filteredData);
         
-        const linhaMap = new Map();
-        filteredData.forEach(i => { let v = linhaMap.get(i.linha_atuacao) || { qtde: 0, valor: 0 }; v.qtde += i.qtde; v.valor += i.valor_liquido; linhaMap.set(i.linha_atuacao, v); });
-        const linhasHtml = Array.from(linhaMap.entries()).sort((a,b)=>b[1].valor-a[1].valor).map(([nome,vals]) => `<div class="linha-card" style="break-inside:avoid;"><div class="linha-nome">${escapeHtml(nome)}</div><div class="linha-stats"><span>📦 ${vals.qtde.toLocaleString('pt-BR')} und</span><span>💰 ${formatMoney(vals.valor)}</span></div></div>`).join('');
+        // ===== RESUMO AGRUPADO POR MÊS/COMPETÊNCIA (Linhas • Clientes • Aluguéis por mês, com subtotal mensal e total geral) =====
+        const sortCompMes = (a, b) => { const va = /^(\d{2})\/(\d{4})$/.exec(a) ? Number(a.split('/')[1]) * 100 + Number(a.split('/')[0]) : Infinity; const vb = /^(\d{2})\/(\d{4})$/.exec(b) ? Number(b.split('/')[1]) * 100 + Number(b.split('/')[0]) : Infinity; return va === vb ? a.localeCompare(b) : va - vb; };
+        const mesMap = new Map();
+        const getMesAcc = (m) => { let acc = mesMap.get(m); if (!acc) { acc = { linhas: new Map(), clientes: new Map(), alu: new Map(), ins: 0, itens: 0, aluTot: 0, aluTit: 0 }; mesMap.set(m, acc); } return acc; };
+        filteredData.forEach(i => { const m = i.competencia || '—'; const acc = getMesAcc(m); acc.ins += i.valor_liquido; acc.itens += i.qtde; const lv = acc.linhas.get(i.linha_atuacao) || { qtde: 0, valor: 0 }; lv.qtde += i.qtde; lv.valor += i.valor_liquido; acc.linhas.set(i.linha_atuacao, lv); const cv = acc.clientes.get(i.cliente) || { qtde: 0, valor: 0 }; cv.qtde += i.qtde; cv.valor += i.valor_liquido; acc.clientes.set(i.cliente, cv); });
+        let hasAluResumo = false, totAluVal = 0, totAluTit = 0;
         
-        const clienteMap = new Map();
-        filteredData.forEach(row => { if(!clienteMap.has(row.cliente)) clienteMap.set(row.cliente, { valor: 0, qtde: 0 }); let acc = clienteMap.get(row.cliente); acc.valor += row.valor_liquido; acc.qtde += row.qtde; });
-        const clientesHtml = Array.from(clienteMap.entries()).sort((a,b)=>b[1].valor-a[1].valor).map(([cliente,vals]) => `<div class="cliente-resumo-card" style="break-inside:avoid;"><div class="cliente-nome">${escapeHtml(cliente)}</div><div>💰 ${formatMoney(vals.valor)} &nbsp;📦 ${vals.qtde.toLocaleString('pt-BR')} itens</div></div>`).join('');
+
+
+        if (typeof alugueisData !== 'undefined' && alugueisData.length) {
+            const aluFilCards = getAlugueisFilteredByMain();
+            if (aluFilCards.length) {
+                hasAluResumo = true;
+                aluFilCards.forEach(r => { const m = r.competencia || '—'; const acc = getMesAcc(m); const av = acc.alu.get(r.cliente) || { valor: 0, titulos: 0, linhas: new Set() }; av.valor += r.valor; av.titulos++; if (r.linha) av.linhas.add(r.linha); acc.alu.set(r.cliente, av); acc.aluTot += r.valor; acc.aluTit++; totAluVal += r.valor; totAluTit++; });
+            }
+        }
+        const totGeralIns = round2(filteredData.reduce((s, r) => s + r.valor_liquido, 0));
+        const totGeralItens = filteredData.reduce((s, r) => s + r.qtde, 0);
+        let mesSecHtml = '';
+        Array.from(mesMap.keys()).sort(sortCompMes).forEach(m => {
+            const acc = mesMap.get(m);
+            const linhasBloco = acc.linhas.size ? `<div class="mes-subttl">🔬 Linhas de Atuação</div><div class="linhas-grid">` + Array.from(acc.linhas.entries()).sort((a, b) => b[1].valor - a[1].valor).map(([nome, vals]) => `<div class="linha-card" style="break-inside:avoid;"><div class="linha-nome">${escapeHtml(nome)}</div><div class="linha-stats"><span>📦 ${vals.qtde.toLocaleString('pt-BR')} und</span><span>💰 ${formatMoney(vals.valor)}</span></div></div>`).join('') + `</div>` : '';
+            const clientesBloco = acc.clientes.size ? `<div class="mes-subttl">🏥 Clientes</div><div class="clientes-resumo-grid">` + Array.from(acc.clientes.entries()).sort((a, b) => b[1].valor - a[1].valor).map(([cliente, vals]) => `<div class="cliente-resumo-card" style="break-inside:avoid;"><div class="cliente-nome">${escapeHtml(cliente)}</div><div>💰 ${formatMoney(vals.valor)} &nbsp;📦 ${vals.qtde.toLocaleString('pt-BR')} itens</div></div>`).join('') + `</div>` : '';
+            const aluBloco = acc.alu.size ? `<div class="mes-subttl">📄 Aluguéis vinculados</div><div class="alu-resumo-grid">` + Array.from(acc.alu.entries()).sort((a, b) => b[1].valor - a[1].valor).map(([cliente, vals]) => `<div class="alu-resumo-card" style="break-inside:avoid;"><div class="alu-resumo-nome">${escapeHtml(cliente)}</div><div>💰 ${formatMoney(vals.valor)} &nbsp;📄 ${vals.titulos.toLocaleString('pt-BR')} título(s) &nbsp;🔬 ${vals.linhas.size} linha(s)</div></div>`).join('') + `</div>` : '';
+            mesSecHtml += `<div class="mes-section"><div class="mes-header"><span class="mes-title">📅 Competência ${escapeHtml(m)}</span><span class="mes-total">🧪 Insumos: ${formatMoney(round2(acc.ins))} • 📦 ${acc.itens.toLocaleString('pt-BR')} itens${acc.aluTot ? ` • 📄 Aluguéis: ${formatMoney(round2(acc.aluTot))} (${acc.aluTit.toLocaleString('pt-BR')} título(s))` : ''}</span></div>${linhasBloco}${clientesBloco}${aluBloco}</div>`;
+        });
+        mesSecHtml += `<div class="mes-total-geral">🏆 TOTAL GERAL — 🧪 Insumos: ${formatMoney(totGeralIns)} • 📦 ${totGeralItens.toLocaleString('pt-BR')} itens${hasAluResumo ? ` • 📄 Aluguéis: ${formatMoney(round2(totAluVal))} (${totAluTit.toLocaleString('pt-BR')} título(s))` : ''}</div>`;
         
         // ===== FUSÃO: bloco consolidado Insumos × Aluguéis + detalhamento de Aluguéis =====
         let aluPrintHtml = '';
@@ -1527,48 +1563,56 @@
         <html>
         <head><meta charset="UTF-8"><title>Relatório Labmedic - ${dataHora}</title>
         <style>
+            /* Relatório independente: A4 paisagem, com área reservada para elementos repetidos. */
             * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, 'Segoe UI', sans-serif; }
-            body { padding: 1.5cm; background: white; }
-            .header { margin-bottom: 25px; text-align: center; border-bottom: 2px solid #0b2b40; padding-bottom: 15px; }
-            .header h1 { color: #0b2b40; font-size: 24px; margin-bottom: 8px; }
-            .header p { color: #2c5a6e; font-size: 12px; margin: 4px 0; }
-            .filters-box { background: #f0f4fa; padding: 12px; border-radius: 12px; margin-bottom: 20px; font-size: 11px; border-left: 4px solid #0b2b40; }
-            .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; margin-bottom: 25px; }
-            .kpi-card { padding: 18px 16px 14px; border-radius: 16px; border-left: 6px solid; break-inside: avoid; }
-            .kpi-card.revenue { border-left-color: #0b2b40; background: linear-gradient(135deg, #fff 60%, #eef4fa 100%); }
-            .kpi-card.volume  { border-left-color: #dd8c4a; background: linear-gradient(135deg, #fff 60%, #fdf5ec 100%); }
-            .kpi-card.clients { border-left-color: #1f6e43; background: linear-gradient(135deg, #fff 60%, #edf7f1 100%); }
-            .kpi-card.nfs     { border-left-color: #6b4fa8; background: linear-gradient(135deg, #fff 60%, #f3f0fa 100%); }
-            .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #7a96b0; margin-bottom: 6px; }
-            .kpi-value { font-size: 26px; font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; }
-            .kpi-card.revenue .kpi-value { color: #0b2b40; }
-            .kpi-card.volume  .kpi-value { color: #b46a1e; }
-            .kpi-card.clients .kpi-value { color: #1a5c38; }
-            .kpi-card.nfs     .kpi-value { color: #4d3480; }
-            .section-title { font-size: 16px; font-weight: 700; color: #0b2b40; margin: 20px 0 12px 0; border-left: 4px solid #0b2b40; padding-left: 12px; }
-            .charts-row { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
-            .chart-box { flex: 1; min-width: 250px; border: 1px solid #ddd; border-radius: 12px; padding: 10px; background: white; }
-            .chart-box img { width: 100%; height: auto; }
-            .linhas-grid, .clientes-resumo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; margin-bottom: 20px; }
-            .linha-card, .cliente-resumo-card { background: #f8fafc; border-radius: 12px; padding: 12px 14px; border-left: 4px solid #0b2b40; break-inside: avoid; }
-            .cliente-resumo-card { border-left-color: #1f6e43; }
-            .linha-nome { font-weight: 700; font-size: 12px; color: #0b2b40; margin-bottom: 6px; }
-            .cliente-nome { font-weight: 700; font-size: 12px; color: #0b2b40; margin-bottom: 6px; }
-            .linha-stats { display: flex; gap: 10px; flex-wrap: wrap; }
-            .linha-stats span { font-size: 13px; font-weight: 800; color: #1a344d; background: white; border-radius: 8px; padding: 3px 8px; }
-            .cliente-resumo-card > div:last-child { font-size: 13px; font-weight: 800; color: #1a5c38; }
-            .table-wrapper { overflow-x: auto; margin: 20px 0; }
-            table { width: 100%; border-collapse: collapse; font-size: 9px; }
-            th { background: #0b2b40; color: white; padding: 8px; text-align: left; }
-            td { border: 1px solid #ccc; padding: 6px; }
-            tr { break-inside: avoid; page-break-inside: avoid; }
-            thead { display: table-header-group; }
-            footer { margin-top: 30px; text-align: center; font-size: 9px; color: #7e95ae; border-top: 1px solid #ccc; padding-top: 10px; }
-            @page { size: landscape; margin: 1.5cm; }
+            html, body { background: #fff; color: #1e2f47; }
+            body { padding: 1.35cm 0 1.1cm; font-size: 10px; line-height: 1.35; }
+            .print-running-header { position: fixed; top: -1.05cm; left: 0; right: 0; height: .72cm; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1.5px solid #0b2b40; color: #0b2b40; background: #fff; font-size: 9px; font-weight: 800; letter-spacing: .35px; text-transform: uppercase; }
+            .print-running-header .brand { color: #0b2b40; }
+            .print-running-header .context { color: #6d8298; font-weight: 600; text-transform: none; letter-spacing: 0; }
+            .print-running-footer { position: fixed; bottom: -.78cm; left: 0; right: 0; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #d8e0e8; padding-top: 4px; color: #7e95ae; background: #fff; font-size: 8px; }
+            .print-running-footer .page-number::after { content: 'Página ' counter(page); }
+            .header { margin: 0 0 16px; padding: 12px 0 13px; border-bottom: 3px solid #0b2b40; }
+            .header h1 { color: #0b2b40; font-size: 23px; line-height: 1.15; margin-bottom: 7px; }
+            .header p { color: #2c5a6e; font-size: 10px; margin: 2px 0; }
+            .filters-box { background: #f0f4fa; padding: 9px 12px; border: 1px solid #dce5ef; border-left: 4px solid #0b2b40; margin-bottom: 16px; font-size: 9px; border-radius: 4px; overflow-wrap: anywhere; break-inside: avoid; }
+            .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 11px; margin-bottom: 17px; }
+            .kpi-card { padding: 13px 13px 11px; border-radius: 8px; border-left: 5px solid; break-inside: avoid; page-break-inside: avoid; }
+            .kpi-card.revenue { border-left-color: #0b2b40; background: #f1f6fb; } .kpi-card.volume { border-left-color: #dd8c4a; background: #fff7ed; } .kpi-card.clients { border-left-color: #1f6e43; background: #eff8f2; } .kpi-card.nfs { border-left-color: #6b4fa8; background: #f5f1fb; }
+            .kpi-title { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .45px; color: #6d8298; margin-bottom: 5px; }
+            .kpi-value { font-size: 20px; font-weight: 900; line-height: 1.1; }
+            .kpi-card.revenue .kpi-value { color: #0b2b40; } .kpi-card.volume .kpi-value { color: #b46a1e; } .kpi-card.clients .kpi-value { color: #1a5c38; } .kpi-card.nfs .kpi-value { color: #4d3480; }
+            .section-title { font-size: 14px; font-weight: 800; color: #0b2b40; margin: 18px 0 9px; border-left: 4px solid #0b2b40; padding: 5px 0 5px 10px; background: #f6f9fc; break-after: avoid; page-break-after: avoid; }
+            .charts-row { display: flex; gap: 12px; margin: 13px 0 17px; flex-wrap: wrap; }
+            .chart-box { flex: 1 1 0; min-width: 250px; border: 1px solid #dbe3eb; border-radius: 8px; padding: 9px; background: #fff; break-inside: avoid; page-break-inside: avoid; }
+            .chart-box img { display: block; width: 100%; height: auto; max-height: 260px; object-fit: contain; }
+            /* Cada competência é um bloco editorial: o título nunca fica órfão dos cartões. */
+            .mes-section { break-inside: avoid; page-break-inside: avoid; }
+            .mes-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; background: #0b2b40; color: #fff; border-radius: 5px; padding: 7px 10px; margin: 12px 0 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; page-break-inside: avoid; break-after: avoid; page-break-after: avoid; }
+            .mes-title { font-size: 11px; font-weight: 800; } .mes-total { font-size: 8.5px; font-weight: 700; background: rgba(255,255,255,.14); border-radius: 5px; padding: 3px 7px; }
+            .mes-subttl { font-size: 9px; font-weight: 800; color: #2c5a6e; text-transform: uppercase; letter-spacing: .45px; margin: 9px 0 5px; border-left: 3px solid #dd8c4a; padding-left: 7px; break-after: avoid; page-break-after: avoid; }
+            .mes-total-geral { background: #1f6e43; color: #fff; border-radius: 5px; padding: 8px 11px; font-size: 10px; font-weight: 800; margin: 12px 0 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; page-break-inside: avoid; }
+            .linhas-grid, .clientes-resumo-grid, .alu-resumo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 8px; margin-bottom: 13px; }
+            .linha-card, .cliente-resumo-card, .alu-resumo-card { background: #f8fafc; border: 1px solid #e5ebf1; border-radius: 6px; padding: 8px 10px; border-left: 3px solid #0b2b40; break-inside: avoid; page-break-inside: avoid; }
+            .cliente-resumo-card { border-left-color: #1f6e43; } .alu-resumo-card { border-left-color: #2c6e4f; }
+            .alu-resumo-nome, .linha-nome, .cliente-nome { font-weight: 800; font-size: 9px; color: #0b2b40; margin-bottom: 4px; overflow-wrap: anywhere; }
+            .alu-resumo-card > div:last-child, .cliente-resumo-card > div:last-child { font-size: 9px; font-weight: 800; color: #1a5c38; }
+            .linha-stats { display: flex; gap: 6px; flex-wrap: wrap; } .linha-stats span { font-size: 9px; font-weight: 800; color: #1a344d; background: #fff; border-radius: 5px; padding: 2px 5px; }
+            .table-wrapper { overflow: visible; margin: 13px 0 17px; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 7.7px; }
+            th { background: #0b2b40; color: #fff; padding: 6px 5px; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            td { border: 1px solid #d3dce5; padding: 5px; vertical-align: top; overflow-wrap: anywhere; }
+            tbody tr:nth-child(even) td { background: #f7fafc; } tr { break-inside: avoid; page-break-inside: avoid; }
+            thead { display: table-header-group; } tfoot { display: table-footer-group; }
+            footer { margin-top: 20px; text-align: center; font-size: 8px; color: #7e95ae; border-top: 1px solid #d8e0e8; padding-top: 7px; break-inside: avoid; }
+            @page { size: A4 landscape; margin: 1.55cm 1.25cm 1.25cm; }
+            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .section-title, .chart-box, .kpi-grid, .filters-box { break-inside: avoid; page-break-inside: avoid; } }
         </style>
         </head>
         <body>
-        <div class="header"><h1>GRUPO LABMEDIC • Relatório Analítico</h1><p>Gerado em: ${dataHora}</p><p>Dashboard de Insumos Laboratoriais</p></div>
+        <div class="print-running-header"><span class="brand">GRUPO LABMEDIC</span><span class="context">Relatório analítico • Dashboard de insumos e aluguéis</span></div>
+        <div class="print-running-footer"><span>Documento gerado automaticamente em ${dataHora}</span><span class="page-number"></span></div>
+        <div class="header"><h1>Relatório Analítico de Insumos</h1><p>GRUPO LABMEDIC • Dashboard de Insumos Laboratoriais</p><p>Gerado em: ${dataHora}</p></div>
         <div class="filters-box"><strong>🎯 Filtros aplicados:</strong> ${filtrosDesc}</div>
         <div class="kpi-grid">
             <div class="kpi-card revenue"><div class="kpi-title">💰 Faturamento Líquido</div><div class="kpi-value">${formatMoney(kpis.totalValor)}</div></div>
@@ -1580,10 +1624,8 @@
             <div class="chart-box"><h3 style="font-size:14px; margin-bottom:8px;">📊 Faturamento por linha</h3>${linhaChartImg ? `<img src="${linhaChartImg}" alt="Gráfico por linha">` : '<p>Gráfico não disponível</p>'}</div>
             <div class="chart-box"><h3 style="font-size:14px; margin-bottom:8px;">📈 Evolução mensal</h3>${monthlyChartImg ? `<img src="${monthlyChartImg}" alt="Evolução mensal">` : '<p>Gráfico não disponível</p>'}</div>
         </div>
-        <div class="section-title">📌 Resumo por Linha de Atuação</div>
-        <div class="linhas-grid">${linhasHtml || '<p>Nenhuma linha encontrada</p>'}</div>
-        <div class="section-title">🏢 Clientes</div>
-        <div class="clientes-resumo-grid">${clientesHtml || '<p>Nenhum cliente encontrado</p>'}</div>
+        <div class="section-title">📅 Resumo por Mês/Competência (Linhas • Clientes • Aluguéis)</div>
+        ${mesSecHtml}
         ${aluPrintHtml}
         <div class="section-title">📋 Extrato Analítico de Insumos (${filteredData.length} registros)</div>
         <div class="table-wrapper"><table><thead><tr><th>Data</th><th>NF</th><th>Competência</th><th>Fornecedor</th><th>Cliente</th><th>Linha</th><th>Produto</th><th>Qtd</th><th>Valor</th></tr></thead><tbody>${tableRows}</tbody></table></div>
@@ -1683,23 +1725,20 @@
         const competencias = [...new Set(filtered.map(r => r.competencia).filter(c => c))].sort((a, b) => { const [ma, ya] = a.split('/'); const [mb, yb] = b.split('/'); return (parseInt(ya) * 100 + parseInt(ma)) - (parseInt(yb) * 100 + parseInt(mb)); });
         const periodoDesc = competencias.length ? `${competencias[0]} a ${competencias[competencias.length - 1]}` : '—';
 
-        // ===== Resumo por Linha de Equipamentos (1ª página) =====
-        const linhaAgg = new Map();
+        // ===== Resumo por Linha de Equipamentos — agrupado por Mês/Competência (1ª página) =====
+        const sortCompAlu = (a, b) => { const va = /^(\d{2})\/(\d{4})$/.exec(a) ? Number(a.split('/')[1]) * 100 + Number(a.split('/')[0]) : Infinity; const vb = /^(\d{2})\/(\d{4})$/.exec(b) ? Number(b.split('/')[1]) * 100 + Number(b.split('/')[0]) : Infinity; return va === vb ? a.localeCompare(b) : va - vb; };
+        const mesAgg = new Map();
         filtered.forEach(r => {
-            if (!linhaAgg.has(r.linha)) linhaAgg.set(r.linha, { valor: 0, qtde: 0, clientes: new Set(), fornecedores: new Set() });
-            const v = linhaAgg.get(r.linha);
+            const m = r.competencia || '—';
+            if (!mesAgg.has(m)) mesAgg.set(m, new Map());
+            const linhaAggM = mesAgg.get(m);
+            if (!linhaAggM.has(r.linha)) linhaAggM.set(r.linha, { valor: 0, qtde: 0, clientes: new Set(), fornecedores: new Set() });
+            const v = linhaAggM.get(r.linha);
             v.valor += r.valor; v.qtde++; v.clientes.add(r.cliente); v.fornecedores.add(r.fornecedor);
         });
-        const linhas = Array.from(linhaAgg.entries()).map(([nome, v]) => ({
-            nome, valor: v.valor, qtde: v.qtde,
-            clientes: v.clientes.size, fornecedores: v.fornecedores.size,
-            ticket: v.qtde ? v.valor / v.qtde : 0,
-            share: totalValor ? v.valor / totalValor * 100 : 0
-        })).sort((a, b) => b.valor - a.valor);
-        const maxLinhaValor = linhas.length ? linhas[0].valor : 0;
 
         const linhaPalette = ['#1e4a36', '#2c6e4f', '#3d8e6a', '#5aa37f', '#b46a1e', '#dd8c4a', '#4d3480', '#6b4fa8', '#0b2b40', '#1f6e43'];
-        const linhaCardsHtml = linhas.map((l, i) => `
+        const buildLineCard = (l, i, maxValor) => `
             <div class="line-card">
                 <div class="line-card-head">
                     <span class="line-rank" style="background:${linhaPalette[i % linhaPalette.length]}">${i + 1}º</span>
@@ -1707,14 +1746,24 @@
                     <span class="line-share">${l.share.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</span>
                 </div>
                 <div class="line-valor">${formatMoney(l.valor)}</div>
-                <div class="line-bar"><div class="line-bar-fill" style="width:${maxLinhaValor ? (l.valor / maxLinhaValor * 100).toFixed(1) : 0}%; background:${linhaPalette[i % linhaPalette.length]}"></div></div>
+                <div class="line-bar"><div class="line-bar-fill" style="width:${maxValor ? (l.valor / maxValor * 100).toFixed(1) : 0}%; background:${linhaPalette[i % linhaPalette.length]}"></div></div>
                 <div class="line-metrics">
                     <div class="line-metric"><span class="lm-label">Títulos</span><span class="lm-value">${l.qtde.toLocaleString('pt-BR')}</span></div>
                     <div class="line-metric"><span class="lm-label">Ticket médio</span><span class="lm-value">${formatMoney(l.ticket)}</span></div>
                     <div class="line-metric"><span class="lm-label">Clientes</span><span class="lm-value">${l.clientes}</span></div>
                     <div class="line-metric"><span class="lm-label">Fornecedores</span><span class="lm-value">${l.fornecedores}</span></div>
                 </div>
-            </div>`).join('');
+            </div>`;
+        let mesLinhasHtml = '';
+        Array.from(mesAgg.keys()).sort(sortCompAlu).forEach(m => {
+            const linhaAggM = mesAgg.get(m);
+            const linhasM = Array.from(linhaAggM.entries()).map(([nome, v]) => ({ nome, valor: v.valor, qtde: v.qtde, clientes: v.clientes.size, fornecedores: v.fornecedores.size, ticket: v.qtde ? v.valor / v.qtde : 0, share: totalValor ? v.valor / totalValor * 100 : 0 })).sort((a, b) => b.valor - a.valor);
+            const maxLinhaValorM = linhasM.length ? linhasM[0].valor : 0;
+            const mesValor = round2(linhasM.reduce((s, l) => s + l.valor, 0));
+            const mesTitulos = linhasM.reduce((s, l) => s + l.qtde, 0);
+            mesLinhasHtml += `<div class="mes-header"><span class="mes-title">📅 Competência ${escapeHtml(m)}</span><span class="mes-total">📄 ${mesTitulos.toLocaleString('pt-BR')} título(s) • 💰 ${formatMoney(mesValor)}</span></div><div class="lines-grid">${linhasM.map((l, i) => buildLineCard(l, i, maxLinhaValorM)).join('')}</div>`;
+        });
+        mesLinhasHtml += `<div class="mes-total-geral">🏆 TOTAL GERAL — 💰 ${formatMoney(round2(totalValor))} • 📄 ${totalTitulos.toLocaleString('pt-BR')} título(s) • 🏥 ${totalClientes} cliente(s)</div>`;
 
         // ===== Resumo por Fornecedor =====
         const fornAgg = new Map();
@@ -1798,6 +1847,10 @@
             .kpi-sub { font-size: 8.5px; color: #8a9aaa; margin-top: 3px; }
 
             /* ===== Cards por Linha de Equipamentos ===== */
+            .mes-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; background: #1e4a36; color: #fff; border-radius: 8px; padding: 6px 12px; margin: 12px 0 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
+            .mes-title { font-size: 11.5px; font-weight: 800; letter-spacing: 0.3px; }
+            .mes-total { font-size: 9px; font-weight: 700; background: rgba(255,255,255,0.16); border-radius: 6px; padding: 2px 8px; }
+            .mes-total-geral { background: #0b2b40; color: #fff; border-radius: 8px; padding: 8px 12px; font-size: 11px; font-weight: 800; margin: 10px 0 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
             .lines-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
             .line-card { border: 1px solid #e2e8ee; border-radius: 10px; padding: 11px 12px; break-inside: avoid; background: #fbfcfd; }
             .line-card-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
@@ -1864,8 +1917,8 @@
                 <div class="kpi-card ticket"><div class="kpi-title">Ticket Médio</div><div class="kpi-value">${formatMoney(ticketMedio)}</div><div class="kpi-sub">Por título emitido</div></div>
             </div>
 
-            <h2 class="section-title">Resumo por Linha de Equipamentos</h2>
-            <div class="lines-grid">${linhaCardsHtml}</div>
+            <h2 class="section-title">Resumo por Linha de Equipamentos — por Mês/Competência</h2>
+            ${mesLinhasHtml}
         </section>
 
         <!-- ================= PÁGINA 2 — Análises visuais e rankings ================= -->
@@ -1946,8 +1999,9 @@
         data.forEach(row => { const linha = row.linha_atuacao; if (!linha) return; if (!linhaMap.has(linha)) linhaMap.set(linha, { valor: 0, qtde: 0 }); const entry = linhaMap.get(linha); entry.valor += row.valor_liquido; entry.qtde += row.qtde; });
         const topLinhas = Array.from(linhaMap.entries()).map(([nome, vals]) => ({ nome, valor: vals.valor, qtde: vals.qtde })).sort((a, b) => b.valor - a.valor);
         const fornecMap = new Map();
-        data.forEach(row => { const forn = row.fornecedor_primeiro; if (!forn) return; if (!fornecMap.has(forn)) fornecMap.set(forn, { valor: 0, qtde: 0, produtos: new Set() }); const entry = fornecMap.get(forn); entry.valor += row.valor_liquido; entry.qtde += row.qtde; entry.produtos.add(row.produto); });
-        const fornecedores = Array.from(fornecMap.entries()).map(([nome, dados]) => ({ nome, valor: dados.valor, qtde: dados.qtde, numProdutos: dados.produtos.size, ticketMedio: dados.qtde > 0 ? dados.valor / dados.qtde : 0 })).sort((a, b) => b.valor - a.valor);
+        data.forEach(row => { const forn = row.fornecedor_primeiro; if (!forn) return; if (!fornecMap.has(forn)) fornecMap.set(forn, { valor: 0, qtde: 0, produtos: new Set(), alugueis: 0 }); const entry = fornecMap.get(forn); entry.valor += row.valor_liquido; entry.qtde += row.qtde; entry.produtos.add(row.produto); });
+        if (aluData.length) aluData.forEach(r => { const forn = primeiroNome(r.fornecedor); if (!forn || !fornecMap.has(forn)) return; fornecMap.get(forn).alugueis += r.valor; });
+        const fornecedores = Array.from(fornecMap.entries()).map(([nome, dados]) => ({ nome, valor: dados.valor, qtde: dados.qtde, numProdutos: dados.produtos.size, alugueisVinculados: round2(dados.alugueis || 0) })).sort((a, b) => b.valor - a.valor);
         const totalValor = data.reduce((s, r) => s + r.valor_liquido, 0);
         const totalItens = data.reduce((s, r) => s + r.qtde, 0);
         const totalClientes = clienteMap.size;
@@ -1970,19 +2024,18 @@
         if (aluFeatureActive && topLinhasAlu.length) { const topLinhaAlu = topLinhasAlu[0]; insights.push({ icon: '🛠️', title: 'Linha Líder em Aluguéis', text: `${topLinhaAlu.nome} concentra ${formatMoney(topLinhaAlu.valor)} em aluguéis de equipamentos vinculados aos clientes filtrados` }); }
         const chartContainerId = 'analysisChartContainer_' + Date.now();
         const html = `<div class="analysis-wrapper">
-            <div class="analysis-header"><h2>Análise de Performance</h2><div class="analysis-header-meta">Gerado em: ${new Date().toLocaleString('pt-BR')}</div><div class="analysis-filters"><strong>Filtros Aplicados:</strong><br>${filtersInfo}</div></div>
+            <div class="analysis-header"><h2>Análise de Performance</h2><div class="analysis-header-meta">Gerado em: ${new Date().toLocaleString('pt-BR')}</div><div class="analysis-filters"><strong>Filtros Aplicados:</strong> ${filtersInfo}</div></div>
             <div class="analysis-kpi-grid">
                 <div class="analysis-kpi-card" style="border-left-color:#0b2b40"><div class="analysis-kpi-icon">💰</div><div class="analysis-kpi-label">Faturamento Total</div><div class="analysis-kpi-value">${formatMoney(totalValor)}</div></div>
                 <div class="analysis-kpi-card" style="border-left-color:#dd8c4a"><div class="analysis-kpi-icon">📦</div><div class="analysis-kpi-label">Itens Vendidos</div><div class="analysis-kpi-value">${totalItens.toLocaleString('pt-BR')}</div></div>
                 <div class="analysis-kpi-card" style="border-left-color:#1f6e43"><div class="analysis-kpi-icon">🏥</div><div class="analysis-kpi-label">Clientes Ativos</div><div class="analysis-kpi-value">${totalClientes}</div></div>
-                <div class="analysis-kpi-card" style="border-left-color:#6b4fa8"><div class="analysis-kpi-icon">💳</div><div class="analysis-kpi-label">Ticket Médio</div><div class="analysis-kpi-value">${formatMoney(ticketMedio)}</div></div>
                 ${aluFeatureActive ? `<div class="analysis-kpi-card" style="border-left-color:#2c6e4f"><div class="analysis-kpi-icon">🛠️</div><div class="analysis-kpi-label">Aluguéis de Equipamentos</div><div class="analysis-kpi-value">${formatMoney(totalAluValor)}</div><div style="font-size:0.68rem;opacity:0.75;margin-top:4px;">${totalAluTitulos.toLocaleString('pt-BR')} título(s) • ${totalAluClientes} cliente(s)</div></div>` : ''}
             </div>
             <div class="insight-grid">${insights.map((insight, idx) => `<div class="insight-card"><div class="insight-icon">${insight.icon}</div><div class="insight-title">${insight.title}</div><div class="insight-text">${insight.text}</div></div>`).join('')}</div>
             <div class="analysis-card"><h3>Top 10 Clientes por Faturamento</h3><div class="analysis-chart-wrapper"><canvas id="${chartContainerId}" class="analysis-chart"></canvas></div></div>
-            <div class="analysis-card"><h3>Ranking de Linhas de Atuação (Insumos)</h3><table class="ranking-table"><thead><tr><th>Posição</th><th>Linha</th><th>Faturamento</th><th>Quantidade</th><th>Participação</th></tr></thead><tbody>${topLinhas.map((l, idx) => `<tr><td>${idx+1}º</td><td>${escapeHtml(l.nome)}</td><td>${formatMoney(l.valor)}</td><td>${l.qtde.toLocaleString('pt-BR')}</td><td>${(l.valor/totalValor*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
+            <div class="analysis-card"><h3>Ranking de Linhas de Atuação (Insumos)</h3>${topLinhas.length ? `<div class="rank-cards-grid">${topLinhas.map((l, idx) => `<div class="rank-card" style="break-inside:avoid;"><span class="rank-pos">${idx+1}º lugar</span><div class="rank-nome">${escapeHtml(l.nome)}</div><div class="rank-stats"><span>💰 ${formatMoney(l.valor)}</span><span>📦 ${l.qtde.toLocaleString('pt-BR')} und</span><span>📊 ${(l.valor/totalValor*100).toFixed(1)}%</span></div></div>`).join('')}</div>` : '<p class="empty-state">Nenhuma linha encontrada</p>'}</div>
             ${aluFeatureActive ? `<div class="analysis-card"><h3>Aluguéis de Equipamentos por Linha de Atuação (vinculados aos clientes/filtros atuais)</h3>${topLinhasAlu.length ? `<table class="ranking-table"><thead><tr><th>Posição</th><th>Linha</th><th>Valor de Aluguel</th><th>Títulos</th><th>Participação</th></tr></thead><tbody>${topLinhasAlu.map((l, idx) => `<tr><td>${idx+1}º</td><td>${escapeHtml(l.nome)}</td><td>${formatMoney(l.valor)}</td><td>${l.qtde.toLocaleString('pt-BR')}</td><td>${(l.valor/totalAluValor*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table><p style="font-size:0.78rem; color:var(--text-secondary); margin-top:10px;">💡 Total consolidado (Insumos + Aluguéis) para os clientes/filtros atuais: <strong>${formatMoney(totalConsolidado)}</strong></p>` : '<p class="empty-state">Nenhum aluguel de equipamento vinculado aos clientes/filtros atuais.</p>'}</div>` : ''}
-            <div class="analysis-card"><h3>Detalhamento por Fornecedor</h3><table class="ranking-table"><thead><tr><th>Fornecedor</th><th>Faturamento</th><th>Qtd Itens</th><th>Produtos</th><th>Ticket Médio</th></tr></thead><tbody>${fornecedores.map(f => `<tr><td>${escapeHtml(f.nome)}</td><td>${formatMoney(f.valor)}</td><td>${f.qtde.toLocaleString('pt-BR')}</td><td>${f.numProdutos}</td><td>${formatMoney(f.ticketMedio)}</td></tr>`).join('')}</tbody></table></div>
+            <div class="analysis-card"><h3>Detalhamento por Fornecedor</h3><table class="ranking-table"><thead><tr><th>Fornecedor</th><th>Faturamento</th><th>Qtd Itens</th><th>Produtos</th><th>Aluguéis (Cliente)</th></tr></thead><tbody>${fornecedores.map(f => `<tr><td>${escapeHtml(f.nome)}</td><td>${formatMoney(f.valor)}</td><td>${f.qtde.toLocaleString('pt-BR')}</td><td>${f.numProdutos}</td><td>${formatMoney(f.alugueisVinculados)}</td></tr>`).join('')}</tbody></table></div>
         </div>`;
         return { html, chartContainerId, topClientes };
     }
@@ -2529,6 +2582,7 @@
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
