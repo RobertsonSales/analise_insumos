@@ -57,16 +57,19 @@
             --kpi-volume-bg:  linear-gradient(135deg, #fff 60%, #fdf5ec 100%);
             --kpi-clients-bg: linear-gradient(135deg, #fff 60%, #edf7f1 100%);
             --kpi-nfs-bg:     linear-gradient(135deg, #fff 60%, #f3f0fa 100%);
+            --kpi-alu-bg:     linear-gradient(135deg, #fff 60%, #edf6f0 100%);
 
             /* Cores semânticas dos KPIs (mantêm identidade da marca) */
             --accent-revenue: #0b2b40;
             --accent-volume:  #dd8c4a;
             --accent-clients: #1f6e43;
             --accent-nfs:     #6b4fa8;
+            --accent-alu:     #2c6e4f;
             --accent-revenue-text: #0b2b40;
             --accent-volume-text:  #b46a1e;
             --accent-clients-text: #1a5c38;
             --accent-nfs-text:     #4d3480;
+            --accent-alu-text:     #1e5239;
 
             /* Tabela */
             --table-head-bg: #0b2b40;
@@ -139,12 +142,14 @@
             --kpi-volume-bg:  linear-gradient(135deg, #1a2433 55%, #3a2c1a 100%);
             --kpi-clients-bg: linear-gradient(135deg, #1a2433 55%, #1c3a2a 100%);
             --kpi-nfs-bg:     linear-gradient(135deg, #1a2433 55%, #2e2547 100%);
+            --kpi-alu-bg:     linear-gradient(135deg, #1a2433 55%, #1c3a2c 100%);
 
             /* Cores semânticas — clareadas para legibilidade sobre fundo escuro */
             --accent-revenue-text: #6fb8e8;
             --accent-volume-text:  #f0a967;
             --accent-clients-text: #5fc99a;
             --accent-nfs-text:     #b39ce0;
+            --accent-alu-text:     #4fc990;
 
             /* Tabela: cabeçalho permanece escuro (já era), mas garantimos contraste */
             --table-head-bg: #0f2235;
@@ -297,13 +302,15 @@
         .analysis-kpi-card[style*="dd8c4a"] { background: var(--kpi-volume-bg); }
         .analysis-kpi-card[style*="1f6e43"] { background: var(--kpi-clients-bg); }
         .analysis-kpi-card[style*="6b4fa8"] { background: var(--kpi-nfs-bg); }
+        .analysis-kpi-card[style*="2c6e4f"] { background: var(--kpi-alu-bg); }
         .analysis-kpi-icon { font-size: 1.6rem; margin-bottom: 8px; }
         .analysis-kpi-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 6px; }
-        .analysis-kpi-value { font-size: 1.8rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; color: var(--text-primary); }
+        .analysis-kpi-value { font-size: clamp(1.15rem, 1.9vw, 1.8rem); font-weight: 900; line-height: 1.15; letter-spacing: -0.5px; color: var(--text-primary); word-break: break-word; overflow-wrap: break-word; }
         .analysis-kpi-card[style*="0b2b40"] .analysis-kpi-value { color: var(--accent-revenue-text); }
         .analysis-kpi-card[style*="dd8c4a"] .analysis-kpi-value { color: var(--accent-volume-text); }
         .analysis-kpi-card[style*="1f6e43"] .analysis-kpi-value { color: var(--accent-clients-text); }
         .analysis-kpi-card[style*="6b4fa8"] .analysis-kpi-value { color: var(--accent-nfs-text); }
+        .analysis-kpi-card[style*="2c6e4f"] .analysis-kpi-value { color: var(--accent-alu-text); }
 
         /* ============================================================
            Overrides para elementos com inline-styles gerados pelo JS
@@ -324,6 +331,7 @@
         [data-theme="dark"] .analysis-kpi-card[style*="0b2b40"] { border-left-color: #6fb8e8 !important; }
         [data-theme="dark"] .analysis-kpi-card[style*="1f6e43"] { border-left-color: #5fc99a !important; }
         [data-theme="dark"] .analysis-kpi-card[style*="6b4fa8"] { border-left-color: #b39ce0 !important; }
+        [data-theme="dark"] .analysis-kpi-card[style*="2c6e4f"] { border-left-color: #4fc990 !important; }
 
         /* Botão "Limpar filtros" com inline background:#778aa2 — fica OK em ambos modos,
            mas no dark ajustamos para integrar visualmente. */
@@ -363,13 +371,13 @@
                 <i class="fas fa-sun icon-sun" aria-hidden="true"></i>
             </button>
             <h1><i class="fas fa-chalkboard-user"></i> GRUPO LABMEDIC • Dashboard Analítico</h1>
-            <p>Insumos laboratoriais • Filtros por ANO selecionam automaticamente todas as competências</p>
+            <p>Insumos laboratoriais + Aluguéis de equipamentos consolidados • Filtros por ANO selecionam automaticamente todas as competências</p>
         </div>
         <div class="upload-area">
             <div class="upload-box">
-                <button id="uploadBtn" class="btn-upload"><i class="fas fa-file-excel"></i> Importar planilha de Insumos</button>
+                <button id="uploadBtn" class="btn-upload" title="Lê as abas Insumos, Linhas e Aluguéis da mesma planilha"><i class="fas fa-file-excel"></i> Importar planilha (Insumos + Aluguéis)</button>
                 <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;" />
-                <button id="openAlugueisBtn" class="btn-upload btn-alugueis"><i class="fas fa-file-invoice-dollar"></i> Importar planilha de Aluguéis</button>
+                <button id="openAlugueisBtn" class="btn-upload btn-alugueis" title="Visão avulsa de Aluguéis com filtros próprios (independente do dashboard consolidado)"><i class="fas fa-file-invoice-dollar"></i> Aluguéis — análise avulsa</button>
                 <span id="fileNameDisplay" class="file-info">📄 Nenhum arquivo carregado</span>
             </div>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -414,8 +422,13 @@
     <div class="kpi-grid" id="kpiContainer"></div>
     <div class="resumo-linhas-section" id="resumoLinhasSection" style="display: none;">
         <div class="chart-card">
-            <h3><i class="fas fa-chart-simple"></i> Resumo por Linha de Atuação</h3>
-            <div class="linhas-grid" id="linhasGrid"></div>
+            <h3 id="linhasResumoToggle" class="retractable-header">
+                <span><i class="fas fa-chart-simple"></i> Resumo por Linha de Atuação</span>
+                <i class="fas fa-chevron-down toggle-icon" id="linhasResumoToggleIcon"></i>
+            </h3>
+            <div id="linhasResumoCollapsibleContent" class="collapsible-content" style="display: none;">
+                <div class="linhas-grid" id="linhasGrid"></div>
+            </div>
         </div>
     </div>
     <div class="chart-card" id="auditSection" style="display: none;">
@@ -437,6 +450,42 @@
     <div class="charts-row">
         <div class="chart-card"><h3>Faturamento por linha</h3><canvas id="linhaChart"></canvas></div>
         <div class="chart-card"><h3>Evolução mensal</h3><canvas id="monthlyChart"></canvas></div>
+    </div>
+    <!-- ==================== CONSOLIDADO INSUMOS × ALUGUÉIS (mesma planilha, mesmos filtros) ==================== -->
+    <div class="chart-card" id="consolidadoSection" style="display: none;">
+        <h3 id="consToggle" class="retractable-header">
+            <span><i class="fas fa-layer-group"></i> Consolidado por Linha — Insumos × Aluguéis <span id="consBadge" class="audit-badge"></span></span>
+            <i class="fas fa-chevron-up toggle-icon" id="consToggleIcon"></i>
+        </h3>
+        <div id="consCollapsibleContent" class="collapsible-content" style="display: block;">
+            <div class="kpi-grid" id="consKpis" style="margin-bottom: 16px;"></div>
+            <div class="charts-row">
+                <div class="chart-card"><h3>Consolidado por Linha (Insumos × Aluguéis)</h3><canvas id="consChartLinha"></canvas></div>
+                <div class="chart-card"><h3>Evolução mensal consolidada</h3><canvas id="consChartMensal"></canvas></div>
+            </div>
+            <div class="table-wrapper"><table class="data-table" id="consTable"><thead><tr><th>Linha de atuação</th><th style="text-align:right">Insumos (R$)</th><th style="text-align:right">Aluguéis (R$)</th><th style="text-align:right">Total (R$)</th><th style="text-align:right">% Aluguéis</th></tr></thead><tbody id="consTableBody"></tbody></table></div>
+        </div>
+    </div>
+    <!-- ==================== ALUGUÉIS — VISÃO INTEGRADA (filtros do dashboard principal) ==================== -->
+    <div class="chart-card" id="alugueisMainSection" style="display: none;">
+        <h3 id="aluMainToggle" class="retractable-header">
+            <span><i class="fas fa-file-invoice-dollar"></i> Aluguéis de Equipamentos — visão integrada (mesmos filtros do dashboard)</span>
+            <i class="fas fa-chevron-up toggle-icon" id="aluMainToggleIcon"></i>
+        </h3>
+        <div id="aluMainCollapsibleContent" class="collapsible-content" style="display: block;">
+            <div class="kpi-grid" id="aluMainKpis" style="margin-bottom: 16px;"></div>
+            <h4 class="audit-h4">Resumo por Linha de Equipamento</h4>
+            <div class="linhas-grid" id="aluMainLinhasGrid" style="margin-bottom: 16px;"></div>
+            <h4 class="audit-h4">Resumo por Fornecedor</h4>
+            <div class="linhas-grid" id="aluMainFornGrid" style="margin-bottom: 16px;"></div>
+            <h4 id="aluMainDetToggle" class="audit-h4 retractable-header" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                <span>Detalhamento dos Títulos (agrupado por Fornecedor, com subtotais)</span>
+                <i class="fas fa-chevron-down toggle-icon" id="aluMainDetToggleIcon"></i>
+            </h4>
+            <div id="aluMainDetCollapsibleContent" class="collapsible-content" style="display: none;">
+                <div class="table-wrapper" style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Fatura</th><th>Cliente</th><th>CNPJ</th><th>Valor</th><th>Emissão</th><th>Linha</th><th>Fornecedor</th></tr></thead><tbody id="aluMainTbody"></tbody></table></div>
+            </div>
+        </div>
     </div>
     <div class="chart-card" id="extratoSection">
         <h3 id="extratoToggle" class="retractable-header">
@@ -1008,6 +1057,11 @@
                 // (PRODUTO → LINHA) do MESMO arquivo, lido a cada importação (dinâmico).
                 LINHAS_REF = buildLinhasReference(wb);
                 IMPORT_AUDIT = null;
+                // FUSÃO: a MESMA planilha já traz a aba "Aluguéis" — extrai junto com Insumos,
+                // alimentando a visão consolidada do dashboard principal (sem segundo upload).
+                alugueisData = [];
+                const sheetNameAluMain = wb.SheetNames.find(n => normalizeText(n) === 'ALUGUEIS');
+                if (sheetNameAluMain) { try { alugueisData = parseAlugueisWorksheet(wb.Sheets[sheetNameAluMain]); } catch(eAlu) { alugueisData = []; } }
                 let ws = wb.Sheets[sheetName];
 
                 // Conta linhas da matriz para usar no contador
@@ -1053,7 +1107,7 @@
                         updateProgress(0.96, `Carregando ${cleaned.length.toLocaleString('pt-BR')} registros válidos…`);
                         setTimeout(() => {
                             processRawData(cleaned);
-                            updateProgress(1, `✔ ${cleaned.length.toLocaleString('pt-BR')} registros carregados!`);
+                            updateProgress(1, `✔ ${cleaned.length.toLocaleString('pt-BR')} registros de insumos${alugueisData.length ? ' + ' + alugueisData.length.toLocaleString('pt-BR') + ' títulos de aluguel' : ''} carregados!`);
                         }, 60);
                     }, 60);
                 };
@@ -1242,10 +1296,83 @@
     function getChartThemeColors(){ return { text:getThemeVar('--chart-text','#5b6b80'), grid:getThemeVar('--chart-grid','rgba(0,0,0,0.08)'), barPrimary:getThemeVar('--chart-bar-primary','#0b2b40'), barSecondary:getThemeVar('--chart-bar-secondary','#2c6e4f'), barTertiary:getThemeVar('--chart-bar-tertiary','#6b4fa8'), linePrimary:getThemeVar('--chart-line-primary','#dd8c4a'), fillPrimary:getThemeVar('--chart-fill-primary','rgba(221,140,74,0.18)'), tooltipBg:getThemeVar('--chart-tooltip-bg','rgba(255,255,255,0.98)'), tooltipText:getThemeVar('--chart-tooltip-text','#102235'), tooltipBorder:getThemeVar('--chart-tooltip-border','rgba(11,43,64,0.12)') }; }
     function formatCurrencyCompact(value){ return 'R$ ' + Number(value || 0).toLocaleString('pt-BR'); }
     function createBaseChartOptions(){ const colors = getChartThemeColors(); return { responsive:true, maintainAspectRatio:true, interaction:{ mode:'index', intersect:false }, plugins:{ legend:{ position:'bottom', labels:{ color:colors.text, usePointStyle:true, boxWidth:10, padding:14 } }, tooltip:{ backgroundColor:colors.tooltipBg, titleColor:colors.tooltipText, bodyColor:colors.tooltipText, borderColor:colors.tooltipBorder, borderWidth:1 } }, scales:{ x:{ ticks:{ color:colors.text, maxRotation:45, minRotation:0 }, grid:{ color:colors.grid } }, y:{ ticks:{ color:colors.text }, grid:{ color:colors.grid } } } }; }
-    function applyThemeToChartInstance(inst){ if(!inst || !inst.canvas) return; const colors = getChartThemeColors(); const canvasId = inst.canvas.id || ''; if(inst.options && inst.options.scales){ Object.keys(inst.options.scales).forEach(axisKey => { const ax = inst.options.scales[axisKey]; if(!ax) return; ax.ticks = ax.ticks || {}; ax.ticks.color = colors.text; ax.grid = ax.grid || {}; ax.grid.color = colors.grid; if(ax.title) ax.title.color = colors.text; }); } inst.options = inst.options || {}; inst.options.plugins = inst.options.plugins || {}; inst.options.plugins.legend = inst.options.plugins.legend || {}; inst.options.plugins.legend.labels = inst.options.plugins.legend.labels || {}; inst.options.plugins.legend.labels.color = colors.text; inst.options.plugins.tooltip = inst.options.plugins.tooltip || {}; inst.options.plugins.tooltip.backgroundColor = colors.tooltipBg; inst.options.plugins.tooltip.titleColor = colors.tooltipText; inst.options.plugins.tooltip.bodyColor = colors.tooltipText; inst.options.plugins.tooltip.borderColor = colors.tooltipBorder; inst.options.plugins.tooltip.borderWidth = 1; (inst.data.datasets || []).forEach(ds => { if(canvasId === 'linhaChart'){ ds.backgroundColor = colors.barPrimary; ds.borderColor = colors.barPrimary; ds.borderRadius = 8; } else if(canvasId === 'monthlyChart' || canvasId === 'alu-chart-mensal'){ ds.borderColor = colors.linePrimary; ds.backgroundColor = colors.fillPrimary; ds.pointBackgroundColor = colors.linePrimary; ds.pointBorderColor = colors.linePrimary; ds.fill = true; ds.tension = 0.3; } else if(canvasId === 'alu-chart-linha' || canvasId.indexOf('analysisChartContainer_') === 0){ ds.backgroundColor = colors.barSecondary; ds.borderColor = colors.barSecondary; ds.borderRadius = 8; } else if(canvasId === 'alu-chart-forn'){ ds.backgroundColor = colors.barTertiary; ds.borderColor = colors.barTertiary; ds.borderRadius = 8; } }); }
+    function applyThemeToChartInstance(inst){ if(!inst || !inst.canvas) return; const colors = getChartThemeColors(); const canvasId = inst.canvas.id || ''; if(inst.options && inst.options.scales){ Object.keys(inst.options.scales).forEach(axisKey => { const ax = inst.options.scales[axisKey]; if(!ax) return; ax.ticks = ax.ticks || {}; ax.ticks.color = colors.text; ax.grid = ax.grid || {}; ax.grid.color = colors.grid; if(ax.title) ax.title.color = colors.text; }); } inst.options = inst.options || {}; inst.options.plugins = inst.options.plugins || {}; inst.options.plugins.legend = inst.options.plugins.legend || {}; inst.options.plugins.legend.labels = inst.options.plugins.legend.labels || {}; inst.options.plugins.legend.labels.color = colors.text; inst.options.plugins.tooltip = inst.options.plugins.tooltip || {}; inst.options.plugins.tooltip.backgroundColor = colors.tooltipBg; inst.options.plugins.tooltip.titleColor = colors.tooltipText; inst.options.plugins.tooltip.bodyColor = colors.tooltipText; inst.options.plugins.tooltip.borderColor = colors.tooltipBorder; inst.options.plugins.tooltip.borderWidth = 1; (inst.data.datasets || []).forEach((ds, dsIdx) => { if(canvasId === 'consChartLinha'){ const cc = dsIdx === 0 ? colors.barPrimary : colors.barSecondary; ds.backgroundColor = cc; ds.borderColor = cc; ds.borderRadius = 8; } else if(canvasId === 'consChartMensal'){ if(dsIdx === 0){ ds.borderColor = colors.barPrimary; ds.backgroundColor = 'transparent'; ds.pointBackgroundColor = colors.barPrimary; ds.pointBorderColor = colors.barPrimary; ds.fill = false; } else if(dsIdx === 1){ ds.borderColor = colors.linePrimary; ds.backgroundColor = colors.fillPrimary; ds.pointBackgroundColor = colors.linePrimary; ds.pointBorderColor = colors.linePrimary; ds.fill = true; ds.tension = 0.3; } else { ds.borderColor = colors.barTertiary; ds.backgroundColor = 'transparent'; ds.fill = false; ds.borderDash = [6,4]; } } else if(canvasId === 'linhaChart'){ ds.backgroundColor = colors.barPrimary; ds.borderColor = colors.barPrimary; ds.borderRadius = 8; } else if(canvasId === 'monthlyChart' || canvasId === 'alu-chart-mensal'){ ds.borderColor = colors.linePrimary; ds.backgroundColor = colors.fillPrimary; ds.pointBackgroundColor = colors.linePrimary; ds.pointBorderColor = colors.linePrimary; ds.fill = true; ds.tension = 0.3; } else if(canvasId === 'alu-chart-linha' || canvasId.indexOf('analysisChartContainer_') === 0){ ds.backgroundColor = colors.barSecondary; ds.borderColor = colors.barSecondary; ds.borderRadius = 8; } else if(canvasId === 'alu-chart-forn'){ ds.backgroundColor = colors.barTertiary; ds.borderColor = colors.barTertiary; ds.borderRadius = 8; } }); }
     function prepareChartsData(data){ let linhaMap=new Map(); data.forEach(i=>linhaMap.set(i.linha_atuacao, (linhaMap.get(i.linha_atuacao)||0)+i.valor_liquido)); let labels=Array.from(linhaMap.keys()), values=labels.map(l=>linhaMap.get(l)); let monthMap=new Map(); data.forEach(i=>monthMap.set(i.competencia, (monthMap.get(i.competencia)||0)+i.valor_liquido)); let months=Array.from(monthMap.keys()).sort((a,b)=>{ let ma=a.match(/(\d{2})\/(\d{4})/), mb=b.match(/(\d{2})\/(\d{4})/); return ma?Number(ma[2])*100+Number(ma[1]) - (Number(mb[2])*100+Number(mb[1])):0; }); return { labelsLinha:labels, valuesLinha:values, sortedMonths:months, monthlyValues:months.map(m=>monthMap.get(m)) }; }
     function updateCharts(cd){ const colors = getChartThemeColors(); if(charts.linhaChart) charts.linhaChart.destroy(); if(charts.monthlyChart) charts.monthlyChart.destroy(); const linhaOptions = createBaseChartOptions(); linhaOptions.plugins.tooltip.callbacks = { label: ctx => formatCurrencyCompact(ctx.raw) }; linhaOptions.scales.y.ticks.callback = value => formatCurrencyCompact(value); charts.linhaChart = new Chart(document.getElementById('linhaChart'),{ type:'bar', data:{ labels:cd.labelsLinha, datasets:[{ label:'Faturamento (R$)', data:cd.valuesLinha, backgroundColor:colors.barPrimary, borderColor:colors.barPrimary, borderRadius:8, maxBarThickness:48 }] }, options:linhaOptions }); const monthlyOptions = createBaseChartOptions(); monthlyOptions.plugins.tooltip.callbacks = { label: ctx => formatCurrencyCompact(ctx.raw) }; monthlyOptions.scales.y.ticks.callback = value => formatCurrencyCompact(value); charts.monthlyChart = new Chart(document.getElementById('monthlyChart'),{ type:'line', data:{ labels:cd.sortedMonths, datasets:[{ label:'Mensal líquido', data:cd.monthlyValues, borderColor:colors.linePrimary, backgroundColor:colors.fillPrimary, pointBackgroundColor:colors.linePrimary, pointBorderColor:colors.linePrimary, pointRadius:4, borderWidth:3, tension:0.3, fill:true }] }, options:monthlyOptions }); }
-    function applyFiltersAndRender(){ if(!dataLoaded) return; let filtered=getFilteredData(); let kpis=computeKPIs(filtered); renderKPIs(kpis); renderResumoLinhas(filtered); renderResumoClientes(filtered); let chartData=prepareChartsData(filtered); updateCharts(chartData); renderExtratoTable(filtered); }
+    // ==================== FUSÃO: ALUGUÉIS INTEGRADOS AO DASHBOARD PRINCIPAL ====================
+    // Os aluguéis são lidos da MESMA planilha (aba "Aluguéis") e filtrados pelos MESMOS
+    // filtros do dashboard principal (Ano/Competência, Linha, Fornecedor, Cliente, Busca).
+    // Fornecedor é comparado pelo primeiro nome (mesma régua dos insumos) e a Linha do
+    // aluguel é canonizada (canonLinha) para casar com as Linhas dos insumos.
+    let consCharts = { linha: null, mensal: null };
+    function getAlugueisFilteredByMain(){
+        if (typeof alugueisData === 'undefined' || !alugueisData.length) return [];
+        let filtered = [...alugueisData];
+        let selPeriods = getSelectedCheckboxes('periodFilter'); if(selPeriods.length) filtered = filtered.filter(r => selPeriods.includes(r.competencia));
+        let selLinhas = getSelectedCheckboxes('linhaFilter'); if(selLinhas.length) filtered = filtered.filter(r => selLinhas.includes(r.linha));
+        let selForn = getSelectedCheckboxes('fornecedorFilter'); if(selForn.length) filtered = filtered.filter(r => selForn.includes(primeiroNome(r.fornecedor)));
+        let selCli = getSelectedCheckboxes('clienteFilter'); if(selCli.length) filtered = filtered.filter(r => selCli.includes(r.cliente));
+        let search = document.getElementById('searchInput').value.trim().toLowerCase();
+        if(search) filtered = filtered.filter(r => r.cliente.toLowerCase().includes(search) || r.fornecedor.toLowerCase().includes(search) || r.linha.toLowerCase().includes(search));
+        return filtered;
+    }
+    function renderConsolidado(insFiltered){
+        const sec = document.getElementById('consolidadoSection'); if(!sec) return;
+        if (typeof alugueisData === 'undefined' || !alugueisData.length) { sec.style.display='none'; return; }
+        const alu = getAlugueisFilteredByMain();
+        sec.style.display='block';
+        const totIns = round2(insFiltered.reduce((s,r)=>s+r.valor_liquido,0));
+        const totAlu = round2(alu.reduce((s,r)=>s+r.valor,0));
+        const totAll = round2(totIns+totAlu);
+        document.getElementById('consBadge').innerHTML = `<span class="audit-pill ok">✔ ${alu.length.toLocaleString('pt-BR')} títulos de aluguel integrados aos filtros do dashboard</span>`;
+        document.getElementById('consKpis').innerHTML = `<div class="kpi-card revenue"><div class="kpi-title"><i class="fas fa-vial"></i> Insumos (líquido)</div><div class="kpi-value">${formatMoney(totIns)}</div></div><div class="kpi-card volume"><div class="kpi-title"><i class="fas fa-file-invoice-dollar"></i> Aluguéis</div><div class="kpi-value">${formatMoney(totAlu)}</div></div><div class="kpi-card clients"><div class="kpi-title"><i class="fas fa-layer-group"></i> Total Consolidado</div><div class="kpi-value">${formatMoney(totAll)}</div></div><div class="kpi-card nfs"><div class="kpi-title"><i class="fas fa-percentage"></i> % Aluguéis</div><div class="kpi-value">${totAll ? (totAlu/totAll*100).toFixed(1) : '0.0'}%</div></div>`;
+        const map = new Map();
+        insFiltered.forEach(r=>{ const v = map.get(r.linha_atuacao)||{ins:0,alu:0}; v.ins+=r.valor_liquido; map.set(r.linha_atuacao,v); });
+        alu.forEach(r=>{ const v = map.get(r.linha)||{ins:0,alu:0}; v.alu+=r.valor; map.set(r.linha,v); });
+        const rows = [...map.entries()].map(([linha,v])=>({linha, ins:round2(v.ins), alu:round2(v.alu), tot:round2(v.ins+v.alu)})).sort((a,b)=>b.tot-a.tot);
+        const colors = getChartThemeColors();
+        if (consCharts.linha) consCharts.linha.destroy();
+        if (consCharts.mensal) consCharts.mensal.destroy();
+        const o1 = createBaseChartOptions();
+        o1.plugins.tooltip.callbacks = { label: ctx => `${ctx.dataset.label}: ${formatMoney(ctx.raw)}` };
+        o1.scales.y.ticks.callback = v => formatCurrencyCompact(v);
+        o1.scales.x.stacked = true; o1.scales.y.stacked = true;
+        consCharts.linha = new Chart(document.getElementById('consChartLinha'),{ type:'bar', data:{ labels: rows.map(r=>r.linha), datasets:[ { label:'Insumos', data: rows.map(r=>r.ins), backgroundColor: colors.barPrimary, borderColor: colors.barPrimary, borderRadius: 6, maxBarThickness: 44 }, { label:'Aluguéis', data: rows.map(r=>r.alu), backgroundColor: colors.barSecondary, borderColor: colors.barSecondary, borderRadius: 6, maxBarThickness: 44 } ] }, options:o1 });
+        const mIns = new Map(), mAlu = new Map();
+        insFiltered.forEach(r=>mIns.set(r.competencia,(mIns.get(r.competencia)||0)+r.valor_liquido));
+        alu.forEach(r=>{ if(r.competencia) mAlu.set(r.competencia,(mAlu.get(r.competencia)||0)+r.valor); });
+        const months = [...new Set([...mIns.keys(),...mAlu.keys()])].sort((a,b)=>{ const ma=a.match(/(\d{2})\/(\d{4})/), mb=b.match(/(\d{2})\/(\d{4})/); return ma&&mb ? (Number(ma[2])*100+Number(ma[1]))-(Number(mb[2])*100+Number(mb[1])) : a.localeCompare(b); });
+        const o2 = createBaseChartOptions();
+        o2.plugins.tooltip.callbacks = { label: ctx => `${ctx.dataset.label}: ${formatMoney(ctx.raw)}` };
+        o2.scales.y.ticks.callback = v => formatCurrencyCompact(v);
+        consCharts.mensal = new Chart(document.getElementById('consChartMensal'),{ type:'line', data:{ labels: months, datasets:[ { label:'Insumos', data: months.map(m=>round2(mIns.get(m)||0)), borderColor: colors.barPrimary, backgroundColor:'transparent', pointBackgroundColor: colors.barPrimary, pointBorderColor: colors.barPrimary, pointRadius:3, borderWidth:3, tension:0.3 }, { label:'Aluguéis', data: months.map(m=>round2(mAlu.get(m)||0)), borderColor: colors.linePrimary, backgroundColor: colors.fillPrimary, pointBackgroundColor: colors.linePrimary, pointBorderColor: colors.linePrimary, pointRadius:3, borderWidth:3, tension:0.3, fill:true }, { label:'Consolidado', data: months.map(m=>round2((mIns.get(m)||0)+(mAlu.get(m)||0))), borderColor: colors.barTertiary, backgroundColor:'transparent', borderDash:[6,4], pointRadius:0, borderWidth:2, tension:0.3 } ] }, options:o2 });
+        document.getElementById('consTableBody').innerHTML = rows.map(r=>`<tr><td><span class="badge-light">${escapeHtml(r.linha)}</span></td><td style="text-align:right">${formatMoney(r.ins)}</td><td style="text-align:right">${formatMoney(r.alu)}</td><td style="text-align:right;font-weight:700">${formatMoney(r.tot)}</td><td style="text-align:right">${r.tot ? (r.alu/r.tot*100).toFixed(1) : '0.0'}%</td></tr>`).join('') + `<tr style="font-weight:800"><td>TOTAL</td><td style="text-align:right">${formatMoney(totIns)}</td><td style="text-align:right">${formatMoney(totAlu)}</td><td style="text-align:right">${formatMoney(totAll)}</td><td style="text-align:right">${totAll ? (totAlu/totAll*100).toFixed(1) : '0.0'}%</td></tr>`;
+    }
+    function renderAlugueisMain(){
+        const sec = document.getElementById('alugueisMainSection'); if(!sec) return;
+        if (typeof alugueisData === 'undefined' || !alugueisData.length) { sec.style.display='none'; return; }
+        const filtered = getAlugueisFilteredByMain();
+        sec.style.display='block';
+        const totalValor = filtered.reduce((s,r)=>s+r.valor,0);
+        const totalClientes = new Set(filtered.map(r=>r.cliente)).size;
+        const totalFornecedores = new Set(filtered.map(r=>r.fornecedor)).size;
+        const ticket = filtered.length ? totalValor/filtered.length : 0;
+        document.getElementById('aluMainKpis').innerHTML = `<div class="kpi-card revenue"><div class="kpi-title"><i class="fas fa-circle-dollar-to-slot"></i> Valor Total (Aluguéis)</div><div class="kpi-value">${formatMoney(totalValor)}</div></div><div class="kpi-card volume"><div class="kpi-title"><i class="fas fa-file-invoice"></i> Nº Títulos</div><div class="kpi-value">${filtered.length.toLocaleString('pt-BR')}</div></div><div class="kpi-card clients"><div class="kpi-title"><i class="fas fa-hospital"></i> Clientes</div><div class="kpi-value">${totalClientes}</div></div><div class="kpi-card nfs"><div class="kpi-title"><i class="fas fa-receipt"></i> Ticket Médio</div><div class="kpi-value">${formatMoney(ticket)}</div><div style="font-size:0.68rem;opacity:0.75;margin-top:4px;">${totalFornecedores} fornecedor(es)</div></div>`;
+        const linhaMap = new Map();
+        filtered.forEach(r=>{ const v = linhaMap.get(r.linha)||{valor:0,qtde:0}; v.valor+=r.valor; v.qtde++; linhaMap.set(r.linha,v); });
+        document.getElementById('aluMainLinhasGrid').innerHTML = Array.from(linhaMap.entries()).sort((a,b)=>b[1].valor-a[1].valor).map(([l,v])=>`<div class="linha-card"><div class="linha-nome">${escapeHtml(l)}</div><div class="linha-stats"><span>📄 ${v.qtde.toLocaleString('pt-BR')} títulos</span><span>💰 ${formatMoney(v.valor)}</span></div></div>`).join('') || '<p class="empty-state">Sem dados</p>';
+        const fornMap = new Map();
+        filtered.forEach(r=>{ const v = fornMap.get(r.fornecedor)||{valor:0,qtde:0}; v.valor+=r.valor; v.qtde++; fornMap.set(r.fornecedor,v); });
+        document.getElementById('aluMainFornGrid').innerHTML = Array.from(fornMap.entries()).sort((a,b)=>b[1].valor-a[1].valor).map(([f,v])=>`<div class="linha-card"><div class="linha-nome">${escapeHtml(f)}</div><div class="linha-stats"><span>📄 ${v.qtde.toLocaleString('pt-BR')} títulos</span><span>💰 ${formatMoney(v.valor)}</span></div></div>`).join('') || '<p class="empty-state">Sem dados</p>';
+        const sortedFiltered = filtered.slice().sort((a,b)=>{ const fc=(a.fornecedor||'').localeCompare(b.fornecedor||'','pt-BR',{sensitivity:'base'}); return fc!==0?fc:parseDateFromBrString(a.emissao)-parseDateFromBrString(b.emissao); });
+        let html='', lastForn=null, subV=0, subQ=0;
+        const flush=()=> lastForn===null?'':`<tr style="font-weight:700;background:var(--table-head-bg);"><td colspan="3">Subtotal — ${escapeHtml(lastForn)}</td><td>${formatMoney(round2(subV))}</td><td colspan="3">${subQ.toLocaleString('pt-BR')} título(s)</td></tr>`;
+        sortedFiltered.forEach(r=>{ if(r.fornecedor!==lastForn){ html+=flush(); lastForn=r.fornecedor; subV=0; subQ=0; html+=`<tr class="group-header-row-alu"><td colspan="7">🏭 ${escapeHtml(r.fornecedor)}</td></tr>`; } subV+=r.valor; subQ++; html+=`<tr><td>${escapeHtml(r.fatura)}</td><td>${escapeHtml(r.cliente)}</td><td>${escapeHtml(r.cnpj)}</td><td style="font-weight:600;">${formatMoney(r.valor)}</td><td>${escapeHtml(r.emissao)}</td><td><span class="badge-light">${escapeHtml(r.linha)}</span></td><td>${escapeHtml(r.fornecedor)}</td></tr>`; });
+        html+=flush();
+        html+=`<tr style="font-weight:800;"><td colspan="3">TOTAL GERAL</td><td>${formatMoney(round2(totalValor))}</td><td colspan="3">${filtered.length.toLocaleString('pt-BR')} título(s) • ${totalClientes} cliente(s)</td></tr>`;
+        document.getElementById('aluMainTbody').innerHTML = sortedFiltered.length ? html : '<tr><td colspan="7" class="empty-state">Nenhum registro com os filtros atuais</td></tr>';
+    }
+    function applyFiltersAndRender(){ if(!dataLoaded) return; let filtered=getFilteredData(); let kpis=computeKPIs(filtered); renderKPIs(kpis); renderResumoLinhas(filtered); renderResumoClientes(filtered); let chartData=prepareChartsData(filtered); updateCharts(chartData); renderExtratoTable(filtered); renderConsolidado(filtered); renderAlugueisMain(); }
     
     document.getElementById('uploadBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
     document.getElementById('fileInput').addEventListener('change', handleFile);
@@ -1274,6 +1401,22 @@
         const mapa = new Map();
         filtered.forEach(r => { const k = r.produto; const m = mapa.get(k) || { "Produto na NF-e": k, "Produto de referência (aba Linhas)": r.linha_produto_ref || '', "Linha": r.linha_atuacao, "Critério": LINHA_ORIGEM_LABEL[r.linha_origem] || r.linha_origem || '', "Similaridade": r.linha_score, "Itens": 0, "Valor Líquido": 0 }; m["Itens"]++; m["Valor Líquido"] = round2(m["Valor Líquido"] + r.valor_liquido); mapa.set(k, m); });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([...mapa.values()].sort((a, b) => b["Valor Líquido"] - a["Valor Líquido"])), "Mapeamento_Linhas");
+        // FUSÃO: abas de Aluguéis (filtradas pelos mesmos filtros do dashboard) e Consolidado por Linha
+        if (typeof alugueisData !== 'undefined' && alugueisData.length) {
+            const aluFil = getAlugueisFilteredByMain();
+            if (aluFil.length) {
+                const aluDetail = aluFil.slice().sort((a,b)=>{ const fc=(a.fornecedor||'').localeCompare(b.fornecedor||'','pt-BR',{sensitivity:'base'}); return fc!==0?fc:parseDateFromBrString(a.emissao)-parseDateFromBrString(b.emissao); })
+                    .map(r => ({ "Fatura": r.fatura, "Cliente": r.cliente, "CNPJ": r.cnpj, "Valor": r.valor, "Emissão": r.emissao, "Competência": r.competencia, "Linha": r.linha, "Fornecedor": r.fornecedor }));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(aluDetail), "Alugueis_Filtrados");
+                const consMap = new Map();
+                filtered.forEach(r => { const v = consMap.get(r.linha_atuacao) || { linha: r.linha_atuacao, ins: 0, alu: 0 }; v.ins += r.valor_liquido; consMap.set(r.linha_atuacao, v); });
+                aluFil.forEach(r => { const v = consMap.get(r.linha) || { linha: r.linha, ins: 0, alu: 0 }; v.alu += r.valor; consMap.set(r.linha, v); });
+                let tIns = 0, tAlu = 0;
+                const consRows = [...consMap.values()].map(v => { const ins = round2(v.ins), alu = round2(v.alu); tIns += ins; tAlu += alu; return { "Linha": v.linha, "Insumos (R$)": ins, "Aluguéis (R$)": alu, "Total (R$)": round2(ins + alu), "% Aluguéis": (ins + alu) ? round2(alu / (ins + alu) * 100) : 0 }; }).sort((a, b) => b["Total (R$)"] - a["Total (R$)"]);
+                consRows.push({ "Linha": "TOTAL GERAL", "Insumos (R$)": round2(tIns), "Aluguéis (R$)": round2(tAlu), "Total (R$)": round2(tIns + tAlu), "% Aluguéis": (tIns + tAlu) ? round2(tAlu / (tIns + tAlu) * 100) : 0 });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(consRows), "Consolidado_por_Linha");
+            }
+        }
         XLSX.writeFile(wb, `Labmedic_${new Date().toISOString().slice(0,10)}.xlsx`);
         updateProgress(1, "Concluído!");
         setTimeout(() => { document.getElementById('progressContainer').style.display = 'none'; }, 1500);
@@ -1337,6 +1480,43 @@
         filteredData.forEach(row => { if(!clienteMap.has(row.cliente)) clienteMap.set(row.cliente, { valor: 0, qtde: 0 }); let acc = clienteMap.get(row.cliente); acc.valor += row.valor_liquido; acc.qtde += row.qtde; });
         const clientesHtml = Array.from(clienteMap.entries()).sort((a,b)=>b[1].valor-a[1].valor).map(([cliente,vals]) => `<div class="cliente-resumo-card" style="break-inside:avoid;"><div class="cliente-nome">${escapeHtml(cliente)}</div><div>💰 ${formatMoney(vals.valor)} &nbsp;📦 ${vals.qtde.toLocaleString('pt-BR')} itens</div></div>`).join('');
         
+        // ===== FUSÃO: bloco consolidado Insumos × Aluguéis + detalhamento de Aluguéis =====
+        let aluPrintHtml = '';
+        let consLinhaImg = null, consMensalImg = null;
+        if (typeof alugueisData !== 'undefined' && alugueisData.length) {
+            const aluFil = getAlugueisFilteredByMain();
+            if (aluFil.length) {
+                consLinhaImg = await captureCanvasAsImage('consChartLinha');
+                consMensalImg = await captureCanvasAsImage('consChartMensal');
+                const aTotIns = round2(filteredData.reduce((s, r) => s + r.valor_liquido, 0));
+                const aTotAlu = round2(aluFil.reduce((s, r) => s + r.valor, 0));
+                const aTotAll = round2(aTotIns + aTotAlu);
+                const aCli = new Set(aluFil.map(r => r.cliente)).size;
+                const consMapP = new Map();
+                filteredData.forEach(r => { const v = consMapP.get(r.linha_atuacao) || { ins: 0, alu: 0 }; v.ins += r.valor_liquido; consMapP.set(r.linha_atuacao, v); });
+                aluFil.forEach(r => { const v = consMapP.get(r.linha) || { ins: 0, alu: 0 }; v.alu += r.valor; consMapP.set(r.linha, v); });
+                const consRowsP = [...consMapP.entries()].map(([l, v]) => ({ l, ins: round2(v.ins), alu: round2(v.alu), tot: round2(v.ins + v.alu) })).sort((a, b) => b.tot - a.tot);
+                const consTableP = consRowsP.map(r => `<tr><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.l)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${formatMoney(r.ins)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${formatMoney(r.alu)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right; font-weight:700;">${formatMoney(r.tot)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${r.tot ? (r.alu / r.tot * 100).toFixed(1) : '0.0'}%</td></tr>`).join('') + `<tr style="font-weight:800;"><td style="border:1px solid #ccc; padding:6px;">TOTAL</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${formatMoney(aTotIns)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${formatMoney(aTotAlu)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${formatMoney(aTotAll)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${aTotAll ? (aTotAlu / aTotAll * 100).toFixed(1) : '0.0'}%</td></tr>`;
+                const aSorted = aluFil.slice().sort((a, b) => { const fc = (a.fornecedor || '').localeCompare(b.fornecedor || '', 'pt-BR', { sensitivity: 'base' }); return fc !== 0 ? fc : parseDateFromBrString(a.emissao) - parseDateFromBrString(b.emissao); });
+                let aDetail = '', aLast = null, aSubV = 0, aSubQ = 0;
+                const aFlush = () => aLast === null ? '' : `<tr style="font-weight:700; background:#eef4f1;"><td style="border:1px solid #ccc; padding:6px;" colspan="3">Subtotal — ${escapeHtml(aLast)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right; font-weight:700;">${formatMoney(round2(aSubV))}</td><td style="border:1px solid #ccc; padding:6px;" colspan="3">${aSubQ.toLocaleString('pt-BR')} título(s)</td></tr>`;
+                aSorted.forEach(r => { if (r.fornecedor !== aLast) { aDetail += aFlush(); aLast = r.fornecedor; aSubV = 0; aSubQ = 0; aDetail += `<tr style="background:#d9e6de;"><td style="border:1px solid #ccc; padding:6px; font-weight:700;" colspan="7">🏭 ${escapeHtml(r.fornecedor)}</td></tr>`; } aSubV += r.valor; aSubQ++; aDetail += `<tr><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.fatura)}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.cliente).substring(0,50)}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.cnpj)}</td><td style="border:1px solid #ccc; padding:6px; text-align:right; font-weight:600;">${formatMoney(r.valor)}</td><td style="border:1px solid #ccc; padding:6px; text-align:center;">${escapeHtml(r.emissao)}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.linha)}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.fornecedor).substring(0,40)}</td></tr>`; });
+                aDetail += aFlush();
+                aDetail += `<tr style="font-weight:800; background:#1e4a36; color:#fff;"><td style="border:1px solid #ccc; padding:6px;" colspan="3">TOTAL GERAL ALUGUÉIS</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${formatMoney(aTotAlu)}</td><td style="border:1px solid #ccc; padding:6px;" colspan="3">${aluFil.length.toLocaleString('pt-BR')} título(s) • ${aCli} cliente(s)</td></tr>`;
+                aluPrintHtml = `
+        <div class="section-title">🔗 Consolidado por Linha — Insumos × Aluguéis</div>
+        <div class="kpi-grid">
+            <div class="kpi-card revenue"><div class="kpi-title">🧪 Insumos (líquido)</div><div class="kpi-value">${formatMoney(aTotIns)}</div></div>
+            <div class="kpi-card volume"><div class="kpi-title">📄 Aluguéis</div><div class="kpi-value">${formatMoney(aTotAlu)}</div></div>
+            <div class="kpi-card clients"><div class="kpi-title">🔗 Total Consolidado</div><div class="kpi-value">${formatMoney(aTotAll)}</div></div>
+            <div class="kpi-card nfs"><div class="kpi-title">% Aluguéis</div><div class="kpi-value">${aTotAll ? (aTotAlu / aTotAll * 100).toFixed(1) : '0.0'}%</div></div>
+        </div>
+        ${(consLinhaImg || consMensalImg) ? `<div class="charts-row">${consLinhaImg ? `<div class="chart-box"><h3 style="font-size:14px; margin-bottom:8px;">📊 Consolidado por Linha</h3><img src="${consLinhaImg}" alt="Consolidado por linha"></div>` : ''}${consMensalImg ? `<div class="chart-box"><h3 style="font-size:14px; margin-bottom:8px;">📈 Evolução mensal consolidada</h3><img src="${consMensalImg}" alt="Evolução consolidada"></div>` : ''}</div>` : ''}
+        <div class="table-wrapper"><table><thead><tr><th>Linha de atuação</th><th style="text-align:right;">Insumos (R$)</th><th style="text-align:right;">Aluguéis (R$)</th><th style="text-align:right;">Total (R$)</th><th style="text-align:right;">% Aluguéis</th></tr></thead><tbody>${consTableP}</tbody></table></div>
+        <div class="section-title">📄 Aluguéis — Detalhamento dos Títulos (${aluFil.length} registros, agrupado por Fornecedor)</div>
+        <div class="table-wrapper"><table><thead><tr><th>Fatura</th><th>Cliente</th><th>CNPJ</th><th style="text-align:right;">Valor</th><th>Emissão</th><th>Linha</th><th>Fornecedor</th></tr></thead><tbody>${aDetail}</tbody></table></div>`;
+            }
+        }
         const tableRows = filteredData.map(r => `<tr><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.dataOriginal||'—')}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.nf||'—')}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.competencia)}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.fornecedor_completo).substring(0,40)}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.cliente).substring(0,50)}</td><td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.linha_atuacao)}</td> <td style="border:1px solid #ccc; padding:6px;">${escapeHtml(r.produto).substring(0,80)}</td> <td style="border:1px solid #ccc; padding:6px; text-align:center;">${r.qtde.toLocaleString('pt-BR')}</td> <td style="border:1px solid #ccc; padding:6px; text-align:right; font-weight:600;">${formatMoney(r.valor_liquido)}</td> </tr>`).join('');
         
         const now = new Date();
@@ -1404,7 +1584,8 @@
         <div class="linhas-grid">${linhasHtml || '<p>Nenhuma linha encontrada</p>'}</div>
         <div class="section-title">🏢 Clientes</div>
         <div class="clientes-resumo-grid">${clientesHtml || '<p>Nenhum cliente encontrado</p>'}</div>
-        <div class="section-title">📋 Extrato Analítico (${filteredData.length} registros)</div>
+        ${aluPrintHtml}
+        <div class="section-title">📋 Extrato Analítico de Insumos (${filteredData.length} registros)</div>
         <div class="table-wrapper"><table><thead><tr><th>Data</th><th>NF</th><th>Competência</th><th>Fornecedor</th><th>Cliente</th><th>Linha</th><th>Produto</th><th>Qtd</th><th>Valor</th></tr></thead><tbody>${tableRows}</tbody></table></div>
         <footer>GRUPO LABMEDIC • Relatório gerado pelo sistema de dashboard hospitalar</footer>
         </body>
@@ -1445,11 +1626,11 @@
             .header { margin-bottom: 20px; border-bottom: 2px solid #0b2b40; padding-bottom: 10px; }
             .header h1 { color: #0b2b40; font-size: 22px; }
             .filters-box { background: #f0f4fa; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 11px; border-left: 4px solid #0b2b40; }
-            .analysis-kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; margin-bottom: 20px; }
+            .analysis-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 15px; margin-bottom: 20px; }
             .analysis-kpi-card { border-radius: 16px; padding: 18px 16px 14px; border-left: 6px solid; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
             .analysis-kpi-card .analysis-kpi-icon { font-size: 22px; margin-bottom: 6px; }
             .analysis-kpi-card .analysis-kpi-label { font-size: 10px; font-weight: 700; color: #7a96b0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-            .analysis-kpi-card .analysis-kpi-value { font-size: 26px; font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; color: #0f2235; }
+            .analysis-kpi-card .analysis-kpi-value { font-size: 22px; font-weight: 900; line-height: 1.15; letter-spacing: -0.5px; color: #0f2235; word-break: break-word; overflow-wrap: break-word; }
             .insight-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 12px; margin-bottom: 20px; }
             .insight-card { background: linear-gradient(135deg,#f8fafc 0%,#eef2f8 100%); border-radius: 12px; padding: 14px; border-left: 4px solid #6b4fa8; }
             .analysis-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; break-inside: avoid; }
@@ -1489,76 +1670,241 @@
         const chartLinha = await captureCanvasAsImage('alu-chart-linha');
         const chartForn = await captureCanvasAsImage('alu-chart-forn');
         const chartMensal = await captureCanvasAsImage('alu-chart-mensal');
-        
-        const kpisHtml = document.getElementById('alu-kpis')?.outerHTML || '';
-        const linhasGrid = document.getElementById('alu-linhas-grid')?.outerHTML || '';
-        const fornGrid = document.getElementById('alu-forn-grid')?.outerHTML || '';
-        const clientesGrid = document.getElementById('alu-clientes-grid')?.outerHTML || '';
-        const tableHtml = document.getElementById('alu-tbody')?.parentElement?.outerHTML || '';
-        
+
+        // ===== Dados recalculados a partir da fonte filtrada (garante consistência do relatório) =====
+        const filtered = getAlugueisFiltered();
+        if (!filtered.length) { alert('Não há dados de aluguéis com os filtros atuais.'); return; }
+
+        const totalValor = filtered.reduce((s, r) => s + r.valor, 0);
+        const totalTitulos = filtered.length;
+        const totalClientes = new Set(filtered.map(r => r.cliente)).size;
+        const totalFornecedores = new Set(filtered.map(r => r.fornecedor)).size;
+        const ticketMedio = totalTitulos ? totalValor / totalTitulos : 0;
+        const competencias = [...new Set(filtered.map(r => r.competencia).filter(c => c))].sort((a, b) => { const [ma, ya] = a.split('/'); const [mb, yb] = b.split('/'); return (parseInt(ya) * 100 + parseInt(ma)) - (parseInt(yb) * 100 + parseInt(mb)); });
+        const periodoDesc = competencias.length ? `${competencias[0]} a ${competencias[competencias.length - 1]}` : '—';
+
+        // ===== Resumo por Linha de Equipamentos (1ª página) =====
+        const linhaAgg = new Map();
+        filtered.forEach(r => {
+            if (!linhaAgg.has(r.linha)) linhaAgg.set(r.linha, { valor: 0, qtde: 0, clientes: new Set(), fornecedores: new Set() });
+            const v = linhaAgg.get(r.linha);
+            v.valor += r.valor; v.qtde++; v.clientes.add(r.cliente); v.fornecedores.add(r.fornecedor);
+        });
+        const linhas = Array.from(linhaAgg.entries()).map(([nome, v]) => ({
+            nome, valor: v.valor, qtde: v.qtde,
+            clientes: v.clientes.size, fornecedores: v.fornecedores.size,
+            ticket: v.qtde ? v.valor / v.qtde : 0,
+            share: totalValor ? v.valor / totalValor * 100 : 0
+        })).sort((a, b) => b.valor - a.valor);
+        const maxLinhaValor = linhas.length ? linhas[0].valor : 0;
+
+        const linhaPalette = ['#1e4a36', '#2c6e4f', '#3d8e6a', '#5aa37f', '#b46a1e', '#dd8c4a', '#4d3480', '#6b4fa8', '#0b2b40', '#1f6e43'];
+        const linhaCardsHtml = linhas.map((l, i) => `
+            <div class="line-card">
+                <div class="line-card-head">
+                    <span class="line-rank" style="background:${linhaPalette[i % linhaPalette.length]}">${i + 1}º</span>
+                    <span class="line-name">${escapeHtml(l.nome) || '—'}</span>
+                    <span class="line-share">${l.share.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</span>
+                </div>
+                <div class="line-valor">${formatMoney(l.valor)}</div>
+                <div class="line-bar"><div class="line-bar-fill" style="width:${maxLinhaValor ? (l.valor / maxLinhaValor * 100).toFixed(1) : 0}%; background:${linhaPalette[i % linhaPalette.length]}"></div></div>
+                <div class="line-metrics">
+                    <div class="line-metric"><span class="lm-label">Títulos</span><span class="lm-value">${l.qtde.toLocaleString('pt-BR')}</span></div>
+                    <div class="line-metric"><span class="lm-label">Ticket médio</span><span class="lm-value">${formatMoney(l.ticket)}</span></div>
+                    <div class="line-metric"><span class="lm-label">Clientes</span><span class="lm-value">${l.clientes}</span></div>
+                    <div class="line-metric"><span class="lm-label">Fornecedores</span><span class="lm-value">${l.fornecedores}</span></div>
+                </div>
+            </div>`).join('');
+
+        // ===== Resumo por Fornecedor =====
+        const fornAgg = new Map();
+        filtered.forEach(r => {
+            if (!fornAgg.has(r.fornecedor)) fornAgg.set(r.fornecedor, { valor: 0, qtde: 0, clientes: new Set() });
+            const v = fornAgg.get(r.fornecedor);
+            v.valor += r.valor; v.qtde++; v.clientes.add(r.cliente);
+        });
+        const fornRows = Array.from(fornAgg.entries()).map(([nome, v]) => ({ nome, valor: v.valor, qtde: v.qtde, clientes: v.clientes.size, share: totalValor ? v.valor / totalValor * 100 : 0 }))
+            .sort((a, b) => b.valor - a.valor)
+            .map((f, i) => `<tr><td class="td-center">${i + 1}º</td><td>${escapeHtml(f.nome) || '—'}</td><td class="td-num">${formatMoney(f.valor)}</td><td class="td-center">${f.qtde.toLocaleString('pt-BR')}</td><td class="td-center">${f.clientes}</td><td class="td-num">${f.share.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</td></tr>`).join('');
+
+        // ===== Top Clientes =====
+        const cliAgg = new Map();
+        filtered.forEach(r => {
+            if (!cliAgg.has(r.cliente)) cliAgg.set(r.cliente, { valor: 0, qtde: 0 });
+            const v = cliAgg.get(r.cliente);
+            v.valor += r.valor; v.qtde++;
+        });
+        const cliRows = Array.from(cliAgg.entries()).map(([nome, v]) => ({ nome, valor: v.valor, qtde: v.qtde, share: totalValor ? v.valor / totalValor * 100 : 0 }))
+            .sort((a, b) => b.valor - a.valor)
+            .slice(0, 15)
+            .map((c, i) => `<tr><td class="td-center">${i + 1}º</td><td>${escapeHtml(c.nome) || '—'}</td><td class="td-num">${formatMoney(c.valor)}</td><td class="td-center">${c.qtde.toLocaleString('pt-BR')}</td><td class="td-num">${c.share.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</td></tr>`).join('');
+
+        // ===== Detalhamento (tabela agrupada por fornecedor, com subtotais e total geral) =====
+        const sortedFiltered = filtered.slice().sort((a, b) => {
+            const fc = (a.fornecedor || '').localeCompare(b.fornecedor || '', 'pt-BR', { sensitivity: 'base' });
+            if (fc !== 0) return fc;
+            return parseDateFromBrString(a.emissao) - parseDateFromBrString(b.emissao);
+        });
+        let detailRows = ''; let lastForn = null; let fornSubValor = 0; let fornSubQtde = 0;
+        const flushSubtotal = () => {
+            if (lastForn === null) return '';
+            return `<tr class="subtotal-row"><td colspan="3">Subtotal — ${escapeHtml(lastForn)}</td><td class="td-num">${formatMoney(fornSubValor)}</td><td colspan="3" class="td-center">${fornSubQtde.toLocaleString('pt-BR')} título(s)</td></tr>`;
+        };
+        sortedFiltered.forEach(r => {
+            if (r.fornecedor !== lastForn) {
+                detailRows += flushSubtotal();
+                lastForn = r.fornecedor; fornSubValor = 0; fornSubQtde = 0;
+                detailRows += `<tr class="group-header-row-alu"><td colspan="7">🏭 ${escapeHtml(r.fornecedor) || '—'}</td></tr>`;
+            }
+            fornSubValor += r.valor; fornSubQtde++;
+            detailRows += `<tr><td>${escapeHtml(r.fatura)}</td><td>${escapeHtml(r.cliente)}</td><td>${escapeHtml(r.cnpj)}</td><td class="td-num" style="font-weight:600;">${formatMoney(r.valor)}</td><td class="td-center">${escapeHtml(r.emissao)}</td><td>${escapeHtml(r.linha)}</td><td>${escapeHtml(r.fornecedor)}</td></tr>`;
+        });
+        detailRows += flushSubtotal();
+
         const filtrosDesc = getAlugueisFiltersDescription();
         const now = new Date();
         const dataHora = now.toLocaleString('pt-BR');
-        
+
         const printHtml = `<!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"><title>Relatório de Aluguéis - Grupo Labmedic</title>
+        <html lang="pt-BR">
+        <head><meta charset="UTF-8"><title>Relatório de Aluguéis de Equipamentos • Grupo Labmedic</title>
         <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, 'Segoe UI', sans-serif; }
-            body { padding: 1.5cm; background: white; }
-            .header { margin-bottom: 20px; border-bottom: 2px solid #2c6e4f; padding-bottom: 10px; }
-            .header h1 { color: #2c6e4f; font-size: 22px; }
-            .filters-info { background: #f0f4fa; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 11px; border-left: 4px solid #2c6e4f; }
-            .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; margin-bottom: 20px; }
-            .kpi-card { padding: 18px 16px 14px; border-radius: 16px; border-left: 6px solid; break-inside: avoid; }
-            .kpi-card.revenue { border-left-color: #0b2b40; background: linear-gradient(135deg, #fff 60%, #eef4fa 100%); }
-            .kpi-card.volume  { border-left-color: #dd8c4a; background: linear-gradient(135deg, #fff 60%, #fdf5ec 100%); }
-            .kpi-card.clients { border-left-color: #1f6e43; background: linear-gradient(135deg, #fff 60%, #edf7f1 100%); }
-            .kpi-card.nfs     { border-left-color: #6b4fa8; background: linear-gradient(135deg, #fff 60%, #f3f0fa 100%); }
-            .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #7a96b0; margin-bottom: 6px; }
-            .kpi-value { font-size: 26px; font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; }
-            .kpi-card.revenue .kpi-value { color: #0b2b40; }
-            .kpi-card.volume  .kpi-value { color: #b46a1e; }
-            .kpi-card.clients .kpi-value { color: #1a5c38; }
-            .kpi-card.nfs     .kpi-value { color: #4d3480; }
-            .charts-row { display: flex; gap: 15px; flex-wrap: wrap; margin: 20px 0; }
-            .chart-box { flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 12px; padding: 10px; background: white; }
+            * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, Arial, sans-serif; }
+            body { color: #1a2a3a; background: #fff; font-size: 11px; line-height: 1.45; }
+            @page { size: A4 landscape; margin: 14mm 12mm 16mm 12mm; }
+            section.page { page-break-after: always; }
+            section.page:last-of-type { page-break-after: auto; }
+
+            /* ===== Cabeçalho institucional ===== */
+            .report-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1e4a36; padding-bottom: 10px; margin-bottom: 14px; }
+            .report-header .brand { font-size: 20px; font-weight: 800; color: #1e4a36; letter-spacing: 0.5px; }
+            .report-header .brand span { color: #3d8e6a; }
+            .report-header .doc-title { font-size: 12px; font-weight: 600; color: #4a5a6a; margin-top: 2px; }
+            .report-header .meta { text-align: right; font-size: 9px; color: #6a7a8a; line-height: 1.6; }
+            .meta-strip { display: flex; gap: 18px; background: #f2f7f4; border: 1px solid #d9e6de; border-radius: 8px; padding: 8px 14px; margin-bottom: 14px; font-size: 9.5px; color: #33455a; flex-wrap: wrap; }
+            .meta-strip b { color: #1e4a36; }
+
+            /* ===== KPIs ===== */
+            h2.section-title { font-size: 13px; font-weight: 800; color: #1e4a36; text-transform: uppercase; letter-spacing: 0.6px; margin: 14px 0 8px; padding-left: 8px; border-left: 4px solid #2c6e4f; }
+            .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 6px; }
+            .kpi-card { border-radius: 10px; padding: 12px 14px; border: 1px solid #e2e8ee; border-top: 4px solid; break-inside: avoid; background: #fff; }
+            .kpi-card.revenue { border-top-color: #1e4a36; }
+            .kpi-card.volume  { border-top-color: #dd8c4a; }
+            .kpi-card.clients { border-top-color: #1f6e43; }
+            .kpi-card.nfs     { border-top-color: #6b4fa8; }
+            .kpi-card.ticket  { border-top-color: #0b2b40; }
+            .kpi-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #7a8a9a; margin-bottom: 4px; }
+            .kpi-value { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #16324a; }
+            .kpi-sub { font-size: 8.5px; color: #8a9aaa; margin-top: 3px; }
+
+            /* ===== Cards por Linha de Equipamentos ===== */
+            .lines-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .line-card { border: 1px solid #e2e8ee; border-radius: 10px; padding: 11px 12px; break-inside: avoid; background: #fbfcfd; }
+            .line-card-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+            .line-rank { color: #fff; font-size: 8.5px; font-weight: 800; border-radius: 6px; padding: 2px 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .line-name { flex: 1; font-size: 10.5px; font-weight: 700; color: #16324a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .line-share { font-size: 10px; font-weight: 800; color: #2c6e4f; }
+            .line-valor { font-size: 17px; font-weight: 800; color: #1e4a36; margin-bottom: 5px; }
+            .line-bar { height: 5px; background: #e8eef2; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+            .line-bar-fill { height: 100%; border-radius: 4px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .line-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+            .line-metric { background: #fff; border: 1px solid #e6ecf1; border-radius: 6px; padding: 4px 5px; text-align: center; }
+            .lm-label { display: block; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #8a9aaa; }
+            .lm-value { display: block; font-size: 10px; font-weight: 700; color: #2a3a4a; margin-top: 1px; }
+
+            /* ===== Gráficos ===== */
+            .charts-row { display: flex; gap: 12px; margin: 6px 0 12px; }
+            .chart-box { flex: 1; border: 1px solid #e2e8ee; border-radius: 10px; padding: 10px; background: #fff; break-inside: avoid; }
+            .chart-box h3 { font-size: 10px; font-weight: 700; color: #33455a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
             .chart-box img { width: 100%; height: auto; }
-            .linhas-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 12px; margin-bottom: 20px; }
-            .clientes-resumo-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 12px; margin-bottom: 20px; }
-            .linha-card { background: #f8fafc; border-radius: 12px; padding: 12px 14px; border-left: 4px solid #0b2b40; break-inside: avoid; }
-            .cliente-resumo-card { background: #f8fafc; border-radius: 12px; padding: 12px 14px; border-left: 4px solid #1f6e43; break-inside: avoid; }
-            .linha-nome, .cliente-nome { font-weight: 700; font-size: 12px; color: #0b2b40; margin-bottom: 6px; }
-            .linha-stats { display: flex; gap: 10px; flex-wrap: wrap; }
-            .linha-stats span { font-size: 13px; font-weight: 800; color: #1a344d; background: white; border-radius: 8px; padding: 3px 8px; }
-            .cliente-resumo-card > div:last-child { font-size: 13px; font-weight: 800; color: #1a5c38; }
-            .table-wrapper { overflow-x: auto; margin: 20px 0; }
-            table { width: 100%; border-collapse: collapse; font-size: 9px; }
+
+            /* ===== Tabelas ===== */
+            table { width: 100%; border-collapse: collapse; font-size: 8.5px; margin-bottom: 12px; }
             thead { display: table-header-group; }
-            th { background: #2c6e4f; color: white; padding: 8px; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            td { border: 1px solid #ccc; padding: 6px; }
+            th { background: #1e4a36; color: #fff; padding: 6px 8px; text-align: left; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            td { border-bottom: 1px solid #e2e8ee; padding: 5px 8px; }
+            tbody tr:nth-child(even) td { background: #f7faf9; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             tr { break-inside: avoid; }
-            .group-header-row-alu td { background: #2c6e4f; color: white; font-weight: 700; padding: 6px 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            @page { size: landscape; margin: 1.5cm; }
+            .td-num { text-align: right; font-variant-numeric: tabular-nums; }
+            .td-center { text-align: center; }
+            .group-header-row-alu td { background: #d9e6de; color: #1e4a36; font-weight: 700; font-size: 9px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .subtotal-row td { background: #eef4f1; font-weight: 700; color: #33455a; border-top: 1px solid #c4d6cc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .total-row td { background: #1e4a36; color: #fff; font-weight: 800; font-size: 9.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* ===== Rodapé fixo com paginação ===== */
+            .print-footer { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 8px; color: #8a9aaa; border-top: 1px solid #dfe6ec; padding-top: 4px; background: #fff; }
+            .print-footer .page-num::after { counter-increment: page; content: counter(page); }
+            @media print { .print-footer { position: fixed; bottom: 0; } }
         </style>
         </head>
         <body>
-        <div class="header"><h1>GRUPO LABMEDIC • Relatório de Aluguéis</h1><div>Gerado em: ${dataHora}</div></div>
-        <div class="filters-info"><strong>🔍 Filtros aplicados:</strong> ${filtrosDesc}</div>
-        ${kpisHtml}
-        <div class="charts-row">
-            <div class="chart-box"><h3>Valor por Linha</h3>${chartLinha ? `<img src="${chartLinha}" alt="Gráfico linha">` : '<p>Gráfico indisponível</p>'}</div>
-            <div class="chart-box"><h3>Valor por Fornecedor</h3>${chartForn ? `<img src="${chartForn}" alt="Gráfico fornecedor">` : '<p>Gráfico indisponível</p>'}</div>
-            <div class="chart-box"><h3>Evolução Mensal</h3>${chartMensal ? `<img src="${chartMensal}" alt="Evolução mensal">` : '<p>Gráfico indisponível</p>'}</div>
-        </div>
-        <div><h3>📌 Resumo por Linha de Equipamento</h3>${linhasGrid || '<p>Nenhum dado</p>'}</div>
-        <div><h3>🏭 Resumo por Fornecedor</h3>${fornGrid || '<p>Nenhum dado</p>'}</div>
-        <div><h3>🏆 Top Clientes</h3>${clientesGrid || '<p>Nenhum dado</p>'}</div>
-        <div><h3>📋 Detalhamento dos Títulos</h3>${tableHtml || '<p>Sem dados</p>'}</div>
-        <footer style="margin-top: 30px; text-align: center; font-size: 9px; color: #7e95ae;">GRUPO LABMEDIC • Relatório de Aluguéis</footer>
+
+        <div class="print-footer"><span>GRUPO LABMEDIC • Relatório de Aluguéis de Equipamentos</span><span>Gerado em ${dataHora} • Documento gerado automaticamente</span></div>
+
+        <!-- ================= PÁGINA 1 — Resumo executivo ================= -->
+        <section class="page">
+            <div class="report-header">
+                <div>
+                    <div class="brand">GRUPO <span>LABMEDIC</span></div>
+                    <div class="doc-title">Relatório de Aluguéis de Equipamentos</div>
+                </div>
+                <div class="meta">
+                    <div><b>Emissão:</b> ${dataHora}</div>
+                    <div><b>Período analisado:</b> ${periodoDesc}</div>
+                </div>
+            </div>
+
+            <div class="meta-strip"><span><b>🔍 Filtros aplicados:</b> ${filtrosDesc}</span></div>
+
+            <h2 class="section-title">Visão Geral</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card revenue"><div class="kpi-title">Valor Total</div><div class="kpi-value">${formatMoney(totalValor)}</div><div class="kpi-sub">Período: ${periodoDesc}</div></div>
+                <div class="kpi-card volume"><div class="kpi-title">Nº de Títulos</div><div class="kpi-value">${totalTitulos.toLocaleString('pt-BR')}</div><div class="kpi-sub">Faturas no período</div></div>
+                <div class="kpi-card clients"><div class="kpi-title">Clientes Atendidos</div><div class="kpi-value">${totalClientes}</div><div class="kpi-sub">${totalFornecedores} fornecedor(es)</div></div>
+                <div class="kpi-card ticket"><div class="kpi-title">Ticket Médio</div><div class="kpi-value">${formatMoney(ticketMedio)}</div><div class="kpi-sub">Por título emitido</div></div>
+            </div>
+
+            <h2 class="section-title">Resumo por Linha de Equipamentos</h2>
+            <div class="lines-grid">${linhaCardsHtml}</div>
+        </section>
+
+        <!-- ================= PÁGINA 2 — Análises visuais e rankings ================= -->
+        <section class="page">
+            <h2 class="section-title">Análise Gráfica</h2>
+            <div class="charts-row">
+                <div class="chart-box"><h3>Valor por Linha</h3>${chartLinha ? `<img src="${chartLinha}" alt="Gráfico linha">` : '<p>Gráfico indisponível</p>'}</div>
+                <div class="chart-box"><h3>Valor por Fornecedor</h3>${chartForn ? `<img src="${chartForn}" alt="Gráfico fornecedor">` : '<p>Gráfico indisponível</p>'}</div>
+                <div class="chart-box"><h3>Evolução Mensal</h3>${chartMensal ? `<img src="${chartMensal}" alt="Evolução mensal">` : '<p>Gráfico indisponível</p>'}</div>
+            </div>
+
+            <h2 class="section-title">Ranking por Fornecedor</h2>
+            <table>
+                <thead><tr><th class="td-center" style="width:36px;">#</th><th>Fornecedor</th><th class="td-num">Valor Total</th><th class="td-center">Títulos</th><th class="td-center">Clientes</th><th class="td-num">Participação</th></tr></thead>
+                <tbody>${fornRows}</tbody>
+            </table>
+
+            <h2 class="section-title">Top 15 Clientes</h2>
+            <table>
+                <thead><tr><th class="td-center" style="width:36px;">#</th><th>Cliente</th><th class="td-num">Valor Total</th><th class="td-center">Títulos</th><th class="td-num">Participação</th></tr></thead>
+                <tbody>${cliRows}</tbody>
+            </table>
+        </section>
+
+        <!-- ================= PÁGINA 3+ — Detalhamento ================= -->
+        <section class="page">
+            <h2 class="section-title">Detalhamento dos Títulos (agrupado por Fornecedor)</h2>
+            <table>
+                <thead><tr><th>Fatura</th><th>Cliente</th><th>CNPJ</th><th class="td-num">Valor</th><th class="td-center">Emissão</th><th>Linha</th><th>Fornecedor</th></tr></thead>
+                <tbody>
+                    ${detailRows}
+                    <tr class="total-row"><td colspan="3">TOTAL GERAL</td><td class="td-num">${formatMoney(totalValor)}</td><td colspan="3" class="td-center">${totalTitulos.toLocaleString('pt-BR')} título(s) • ${totalClientes} cliente(s)</td></tr>
+                </tbody>
+            </table>
+        </section>
+
         </body>
         </html>`;
-        
+
         const printWindow = window.open('', '_blank', 'width=1200,height=800,toolbar=yes,scrollbars=yes');
         if (!printWindow) { alert('Permita pop-ups para gerar a impressão.'); return; }
         printWindow.document.write(printHtml);
@@ -1567,7 +1913,7 @@
         printWindow.print();
         printWindow.onafterprint = () => printWindow.close();
     }
-    
+
     document.getElementById('printDashboardBtn').addEventListener('click', printDashboard);
     document.getElementById('printAnalysisBtn').addEventListener('click', printAnalysisFromModal);
     document.getElementById('printAlugueisBtn').addEventListener('click', printAlugueisFromModal);
@@ -1576,11 +1922,23 @@
     document.getElementById('clientesResumoToggle').addEventListener('click', function() { clientesCollapsed = !clientesCollapsed; document.getElementById('clientesCollapsibleContent').style.display = clientesCollapsed ? 'none' : 'block'; document.getElementById('clientesToggleIcon').className = clientesCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
     document.getElementById('auditToggle').addEventListener('click', function() { auditCollapsed = !auditCollapsed; document.getElementById('auditCollapsibleContent').style.display = auditCollapsed ? 'none' : 'block'; document.getElementById('auditToggleIcon').className = auditCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
     document.getElementById('extratoToggle').addEventListener('click', function() { extratoCollapsed = !extratoCollapsed; document.getElementById('extratoCollapsibleContent').style.display = extratoCollapsed ? 'none' : 'block'; document.getElementById('extratoToggleIcon').className = extratoCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
+    // Toggles das novas seções consolidadas (iniciam expandidas)
+    let consCollapsed = false, aluMainCollapsed = false;
+    document.getElementById('consToggle').addEventListener('click', function() { consCollapsed = !consCollapsed; document.getElementById('consCollapsibleContent').style.display = consCollapsed ? 'none' : 'block'; document.getElementById('consToggleIcon').className = consCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
+    document.getElementById('aluMainToggle').addEventListener('click', function() { aluMainCollapsed = !aluMainCollapsed; document.getElementById('aluMainCollapsibleContent').style.display = aluMainCollapsed ? 'none' : 'block'; document.getElementById('aluMainToggleIcon').className = aluMainCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
+    // Toggle retrátil "Resumo por Linha de Atuação" (inicia contraído, igual ao Extrato analítico)
+    let linhasResumoCollapsed = true;
+    document.getElementById('linhasResumoToggle').addEventListener('click', function() { linhasResumoCollapsed = !linhasResumoCollapsed; document.getElementById('linhasResumoCollapsibleContent').style.display = linhasResumoCollapsed ? 'none' : 'block'; document.getElementById('linhasResumoToggleIcon').className = linhasResumoCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
+    // Toggle retrátil "Detalhamento dos Títulos" de Aluguéis (inicia contraído, igual ao Extrato analítico)
+    let aluMainDetCollapsed = true;
+    document.getElementById('aluMainDetToggle').addEventListener('click', function() { aluMainDetCollapsed = !aluMainDetCollapsed; document.getElementById('aluMainDetCollapsibleContent').style.display = aluMainDetCollapsed ? 'none' : 'block'; document.getElementById('aluMainDetToggleIcon').className = aluMainDetCollapsed ? 'fas fa-chevron-down toggle-icon' : 'fas fa-chevron-up toggle-icon'; });
     
-    function openAnalysisModal() { if(!dataLoaded) return; const data = getFilteredData(); if(!data.length) { alert("Sem dados com os filtros atuais."); return; } renderAnalysisPreview(data); document.getElementById('analysisModal').classList.add('active'); }
+    function openAnalysisModal() { if(!dataLoaded) return; const data = getFilteredData(); if(!data.length) { alert("Sem dados com os filtros atuais."); return; } const aluData = (typeof getAlugueisFilteredByMain === 'function') ? getAlugueisFilteredByMain() : []; renderAnalysisPreview(data, aluData); document.getElementById('analysisModal').classList.add('active'); }
     function closeAnalysisModal() { document.getElementById('analysisModal').classList.remove('active'); }
     
-    function generateAnalysisHTML(data, filtersInfo) {
+    function generateAnalysisHTML(data, filtersInfo, aluData) {
+        aluData = aluData || [];
+        const aluFeatureActive = (typeof alugueisData !== 'undefined' && alugueisData.length > 0);
         const clienteMap = new Map();
         data.forEach(row => { const cli = row.cliente; if (!cli) return; if (!clienteMap.has(cli)) clienteMap.set(cli, { valor: 0, qtde: 0 }); const entry = clienteMap.get(cli); entry.valor += row.valor_liquido; entry.qtde += row.qtde; });
         const topClientes = Array.from(clienteMap.entries()).map(([nome, vals]) => ({ nome, valor: vals.valor, qtde: vals.qtde })).sort((a, b) => b.valor - a.valor).slice(0, 10);
@@ -1595,12 +1953,21 @@
         const totalClientes = clienteMap.size;
         const topCliente = topClientes[0] || null;
         const ticketMedio = totalClientes > 0 ? totalValor / totalClientes : 0;
+        // ===== Aluguéis de equipamentos vinculados aos clientes/filtros atuais, por linha de atuação =====
+        const aluLinhaMap = new Map();
+        aluData.forEach(row => { const linha = row.linha; if (!linha) return; if (!aluLinhaMap.has(linha)) aluLinhaMap.set(linha, { valor: 0, qtde: 0 }); const entry = aluLinhaMap.get(linha); entry.valor += row.valor; entry.qtde += 1; });
+        const topLinhasAlu = Array.from(aluLinhaMap.entries()).map(([nome, vals]) => ({ nome, valor: vals.valor, qtde: vals.qtde })).sort((a, b) => b.valor - a.valor);
+        const totalAluValor = aluData.reduce((s, r) => s + r.valor, 0);
+        const totalAluTitulos = aluData.length;
+        const totalAluClientes = new Set(aluData.map(r => r.cliente)).size;
+        const totalConsolidado = totalValor + totalAluValor;
         const insights = [];
         if (topCliente) insights.push({ icon: '🏆', title: 'Maior Cliente', text: `${topCliente.nome} lidera com ${formatMoney(topCliente.valor)} (${(topCliente.valor / totalValor * 100).toFixed(1)}% do total)` });
         const topLinha = topLinhas[0];
         if (topLinha) insights.push({ icon: '📊', title: 'Linha Mais Representativa', text: `${topLinha.nome} com ${formatMoney(topLinha.valor)} (${(topLinha.valor / totalValor * 100).toFixed(1)}% do faturamento)` });
         insights.push({ icon: '📦', title: 'Volume Total', text: `${totalItens.toLocaleString('pt-BR')} itens para ${totalClientes} clientes` });
         insights.push({ icon: '💰', title: 'Ticket Médio', text: `${formatMoney(ticketMedio)} por cliente` });
+        if (aluFeatureActive && topLinhasAlu.length) { const topLinhaAlu = topLinhasAlu[0]; insights.push({ icon: '🛠️', title: 'Linha Líder em Aluguéis', text: `${topLinhaAlu.nome} concentra ${formatMoney(topLinhaAlu.valor)} em aluguéis de equipamentos vinculados aos clientes filtrados` }); }
         const chartContainerId = 'analysisChartContainer_' + Date.now();
         const html = `<div class="analysis-wrapper">
             <div class="analysis-header"><h2>Análise de Performance</h2><div class="analysis-header-meta">Gerado em: ${new Date().toLocaleString('pt-BR')}</div><div class="analysis-filters"><strong>Filtros Aplicados:</strong><br>${filtersInfo}</div></div>
@@ -1609,16 +1976,18 @@
                 <div class="analysis-kpi-card" style="border-left-color:#dd8c4a"><div class="analysis-kpi-icon">📦</div><div class="analysis-kpi-label">Itens Vendidos</div><div class="analysis-kpi-value">${totalItens.toLocaleString('pt-BR')}</div></div>
                 <div class="analysis-kpi-card" style="border-left-color:#1f6e43"><div class="analysis-kpi-icon">🏥</div><div class="analysis-kpi-label">Clientes Ativos</div><div class="analysis-kpi-value">${totalClientes}</div></div>
                 <div class="analysis-kpi-card" style="border-left-color:#6b4fa8"><div class="analysis-kpi-icon">💳</div><div class="analysis-kpi-label">Ticket Médio</div><div class="analysis-kpi-value">${formatMoney(ticketMedio)}</div></div>
+                ${aluFeatureActive ? `<div class="analysis-kpi-card" style="border-left-color:#2c6e4f"><div class="analysis-kpi-icon">🛠️</div><div class="analysis-kpi-label">Aluguéis de Equipamentos</div><div class="analysis-kpi-value">${formatMoney(totalAluValor)}</div><div style="font-size:0.68rem;opacity:0.75;margin-top:4px;">${totalAluTitulos.toLocaleString('pt-BR')} título(s) • ${totalAluClientes} cliente(s)</div></div>` : ''}
             </div>
             <div class="insight-grid">${insights.map((insight, idx) => `<div class="insight-card"><div class="insight-icon">${insight.icon}</div><div class="insight-title">${insight.title}</div><div class="insight-text">${insight.text}</div></div>`).join('')}</div>
             <div class="analysis-card"><h3>Top 10 Clientes por Faturamento</h3><div class="analysis-chart-wrapper"><canvas id="${chartContainerId}" class="analysis-chart"></canvas></div></div>
-            <div class="analysis-card"><h3>Ranking de Linhas de Atuação</h3><table class="ranking-table"><thead><tr><th>Posição</th><th>Linha</th><th>Faturamento</th><th>Quantidade</th><th>Participação</th></tr></thead><tbody>${topLinhas.map((l, idx) => `<tr><td>${idx+1}º</td><td>${escapeHtml(l.nome)}</td><td>${formatMoney(l.valor)}</td><td>${l.qtde.toLocaleString('pt-BR')}</td><td>${(l.valor/totalValor*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
+            <div class="analysis-card"><h3>Ranking de Linhas de Atuação (Insumos)</h3><table class="ranking-table"><thead><tr><th>Posição</th><th>Linha</th><th>Faturamento</th><th>Quantidade</th><th>Participação</th></tr></thead><tbody>${topLinhas.map((l, idx) => `<tr><td>${idx+1}º</td><td>${escapeHtml(l.nome)}</td><td>${formatMoney(l.valor)}</td><td>${l.qtde.toLocaleString('pt-BR')}</td><td>${(l.valor/totalValor*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
+            ${aluFeatureActive ? `<div class="analysis-card"><h3>Aluguéis de Equipamentos por Linha de Atuação (vinculados aos clientes/filtros atuais)</h3>${topLinhasAlu.length ? `<table class="ranking-table"><thead><tr><th>Posição</th><th>Linha</th><th>Valor de Aluguel</th><th>Títulos</th><th>Participação</th></tr></thead><tbody>${topLinhasAlu.map((l, idx) => `<tr><td>${idx+1}º</td><td>${escapeHtml(l.nome)}</td><td>${formatMoney(l.valor)}</td><td>${l.qtde.toLocaleString('pt-BR')}</td><td>${(l.valor/totalAluValor*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table><p style="font-size:0.78rem; color:var(--text-secondary); margin-top:10px;">💡 Total consolidado (Insumos + Aluguéis) para os clientes/filtros atuais: <strong>${formatMoney(totalConsolidado)}</strong></p>` : '<p class="empty-state">Nenhum aluguel de equipamento vinculado aos clientes/filtros atuais.</p>'}</div>` : ''}
             <div class="analysis-card"><h3>Detalhamento por Fornecedor</h3><table class="ranking-table"><thead><tr><th>Fornecedor</th><th>Faturamento</th><th>Qtd Itens</th><th>Produtos</th><th>Ticket Médio</th></tr></thead><tbody>${fornecedores.map(f => `<tr><td>${escapeHtml(f.nome)}</td><td>${formatMoney(f.valor)}</td><td>${f.qtde.toLocaleString('pt-BR')}</td><td>${f.numProdutos}</td><td>${formatMoney(f.ticketMedio)}</td></tr>`).join('')}</tbody></table></div>
         </div>`;
         return { html, chartContainerId, topClientes };
     }
     
-    function renderAnalysisPreview(data) {
+    function renderAnalysisPreview(data, aluData) {
         const selectedYears = Array.from(document.querySelectorAll('.year-chk:checked')).map(cb => cb.value);
         const selectedPeriods = getSelectedCheckboxes('periodFilter');
         const selectedLinhas = getSelectedCheckboxes('linhaFilter');
@@ -1633,7 +2002,7 @@
         if(selectedCli.length) filtersHtml += `<span>🏥 Clientes: ${selectedCli.slice(0,3).join(', ')}${selectedCli.length>3 ? ` +${selectedCli.length-3}` : ''}</span><br>`;
         if(searchTerm) filtersHtml += `<span>🔎 Busca: "${escapeHtml(searchTerm)}"</span><br>`;
         if(!filtersHtml) filtersHtml = '<span>Nenhum filtro ativo (todos os dados)</span>';
-        const { html, chartContainerId, topClientes } = generateAnalysisHTML(data, filtersHtml);
+        const { html, chartContainerId, topClientes } = generateAnalysisHTML(data, filtersHtml, aluData || []);
         const previewContainer = document.getElementById('analysisPreviewContainer');
         previewContainer.innerHTML = html;
         setTimeout(() => {
@@ -1674,7 +2043,7 @@
             const cnpj = String(row[2] || '').trim();
             const valor = parseNumber(row[3]);
             const emissaoRaw = row[4];
-            const linha = String(row[5] || '').trim();
+            const linha = canonLinha(String(row[5] || '').trim()) || LINHA_NAO_CLASSIFICADA;
             const fornecedor = String(row[6] || '').trim();
             if (!fatura || !cliente || valor === 0) continue;
             let dataObj = null;
@@ -2160,5 +2529,7 @@
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
